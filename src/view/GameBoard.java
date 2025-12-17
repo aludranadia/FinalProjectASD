@@ -20,12 +20,15 @@ public class GameBoard extends JFrame {
     private JPanel boardPanel;
     private JPanel rightPanel;
     private JButton rollDiceButton;
-    private JButton newGameButton; // Tombol Baru
+    private JButton newGameButton;
     private JTextArea gameLogArea;
 
     private Map<String, BufferedImage> loadedImages;
     private BufferedImage backgroundImage;
     private BufferedImage shoeImage;
+
+    // --- INTEGRASI SOUND MANAGER ---
+    private SoundManager soundManager;
 
     // KONFIGURASI POSISI GRID
     private static final int GRID_START_X = 145;
@@ -48,6 +51,11 @@ public class GameBoard extends JFrame {
     public GameBoard(GameController gameController) {
         this.gameController = gameController;
         this.loadedImages = new HashMap<>();
+
+        // 1. Inisialisasi Sound & Putar Musik Latar (BGM)
+        this.soundManager = new SoundManager();
+        this.soundManager.playLoop("bgm");
+
         loadResources();
         initComponents();
     }
@@ -75,7 +83,7 @@ public class GameBoard extends JFrame {
 
     private void initComponents() {
         setTitle("Tunnel Escape - Gameplay");
-        setSize(1100, 850); // Sedikit dipertinggi untuk tombol baru
+        setSize(1100, 850);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(false);
@@ -132,21 +140,21 @@ public class GameBoard extends JFrame {
         dicePanel.setMaximumSize(new Dimension(250, 120));
         dicePanel.setOpaque(false);
 
-        // PERBAIKAN 5: Warna Teks Tombol Roll Dice Gelap
+        // Tombol Roll Dice
         rollDiceButton = new JButton("ROLL DICE");
         rollDiceButton.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        rollDiceButton.setBackground(new Color(230, 126, 34)); // Orange
-        rollDiceButton.setForeground(new Color(30, 30, 30)); // Teks Gelap
+        rollDiceButton.setBackground(new Color(230, 126, 34));
+        rollDiceButton.setForeground(new Color(30, 30, 30));
         rollDiceButton.setFocusPainted(false);
         rollDiceButton.setAlignmentX(CENTER_ALIGNMENT);
         rollDiceButton.setMaximumSize(new Dimension(250, 50));
         rollDiceButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         rollDiceButton.addActionListener(e -> handleRoll());
 
-        // PERBAIKAN 6: Tombol New Game
+        // Tombol New Game
         newGameButton = new JButton("NEW GAME");
         newGameButton.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        newGameButton.setBackground(new Color(52, 152, 219)); // Biru
+        newGameButton.setBackground(new Color(52, 152, 219));
         newGameButton.setForeground(Color.WHITE);
         newGameButton.setFocusPainted(false);
         newGameButton.setAlignmentX(CENTER_ALIGNMENT);
@@ -171,7 +179,7 @@ public class GameBoard extends JFrame {
         panel.add(dicePanel);
         panel.add(Box.createRigidArea(new Dimension(0, 10)));
         panel.add(rollDiceButton);
-        panel.add(Box.createRigidArea(new Dimension(0, 10))); // Jarak antar tombol
+        panel.add(Box.createRigidArea(new Dimension(0, 10)));
         panel.add(newGameButton);
         panel.add(Box.createRigidArea(new Dimension(0, 20)));
         panel.add(scrollLog);
@@ -180,6 +188,9 @@ public class GameBoard extends JFrame {
     }
 
     private void handleNewGame() {
+        // 2. Stop BGM saat keluar
+        soundManager.stop("bgm");
+
         gameController.reset();
         this.dispose();
         new IntroScreen(gameController).setVisible(true);
@@ -225,41 +236,36 @@ public class GameBoard extends JFrame {
         g2.setFont(new Font("Arial", Font.BOLD, 12));
         FontMetrics fm = g2.getFontMetrics();
 
-        // PERBAIKAN 3: Loop untuk urutan angka mengular (Boustrophedon)
+        // GRID & ANGKA
         for (int row = 0; row < GRID_ROWS; row++) {
             for (int col = 0; col < GRID_COLS; col++) {
                 int nodeNum;
                 if (row % 2 == 0) {
-                    // Baris Genap (0, 2, ...): Kiri ke Kanan (1-8, 17-24, ...)
                     nodeNum = (row * GRID_COLS) + col + 1;
                 } else {
-                    // Baris Ganjil (1, 3, ...): Kanan ke Kiri (16-9, 32-25, ...)
                     nodeNum = (row * GRID_COLS) + (GRID_COLS - 1 - col) + 1;
                 }
 
                 int x = GRID_START_X + (col * CELL_STEP_X);
                 int y = GRID_START_Y + (row * CELL_STEP_Y);
 
-                // PERBAIKAN 4: Posisi angka digeser lebih ke kiri (x+3, y+15)
                 String numStr = String.valueOf(nodeNum);
                 g2.setColor(new Color(0,0,0, 150));
-                g2.drawString(numStr, x + 4, y + 16); // Shadow
+                g2.drawString(numStr, x + 4, y + 16);
                 g2.setColor(new Color(255, 255, 255, 180));
-                g2.drawString(numStr, x + 3, y + 15); // Teks
+                g2.drawString(numStr, x + 3, y + 15);
             }
         }
 
+        // SHORTCUTS (SHOES)
         Map<Integer, Integer> shortcuts = gameController.getGraph().getShortcuts();
-
         g2.setStroke(new BasicStroke(3f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-
         g2.setColor(new Color(255, 215, 0, 200));
 
         for (Map.Entry<Integer, Integer> entry : shortcuts.entrySet()) {
             Point startPt = getNodeCoordinates(entry.getKey());
             Point endPt = getNodeCoordinates(entry.getValue());
             if (startPt != null && endPt != null) {
-                // Gambar garis dari tengah cell ke tengah cell
                 g2.drawLine(startPt.x + CELL_SIZE/2, startPt.y + CELL_SIZE/2,
                         endPt.x + CELL_SIZE/2, endPt.y + CELL_SIZE/2);
             }
@@ -267,12 +273,12 @@ public class GameBoard extends JFrame {
 
         if (shoeImage != null) {
             for (Map.Entry<Integer, Integer> entry : shortcuts.entrySet()) {
-                drawShoeAtNode(g2, entry.getKey());   // Gambar di node awal
-                drawShoeAtNode(g2, entry.getValue()); // Gambar di node tujuan
+                drawShoeAtNode(g2, entry.getKey());
+                drawShoeAtNode(g2, entry.getValue());
             }
         }
 
-        // 3. Draw Players
+        // DRAW PLAYERS
         Map<Integer, java.util.List<Player>> mapPos = new HashMap<>();
         for (Player p : gameController.getPlayerQueue()) {
             int drawPos = p.getCurrentPosition();
@@ -286,7 +292,6 @@ public class GameBoard extends JFrame {
             int pos = entry.getKey();
             if (pos < 1 || pos > 64) continue;
 
-            // Cari koordinat row/col berdasarkan nomor node yang mengular
             int row = (pos - 1) / GRID_COLS;
             int col;
             if (row % 2 == 0) {
@@ -346,8 +351,6 @@ public class GameBoard extends JFrame {
     private void drawShoeAtNode(Graphics2D g2, int nodeNum) {
         Point pt = getNodeCoordinates(nodeNum);
         if (pt != null) {
-            // Gambar sepatu sedikit di pojok kiri atas cell agar tidak tertutup player
-            // Ukuran 25x25
             g2.drawImage(shoeImage, pt.x + 5, pt.y + 5, 25, 25, null);
         }
     }
@@ -389,7 +392,7 @@ public class GameBoard extends JFrame {
 
         isRolling = true;
         rollDiceButton.setEnabled(false);
-        newGameButton.setEnabled(false); // Disable new game saat roll
+        newGameButton.setEnabled(false);
 
         Timer rollTimer = new Timer(100, new ActionListener() {
             int count = 0;
@@ -414,6 +417,11 @@ public class GameBoard extends JFrame {
         isRolling = false;
         currentDiceNumber = result.getDiceResult().getNumber();
         currentDiceColor = result.getDiceResult().getColor();
+
+        // 3. Logic Sound Angin (WIND)
+        if (currentDiceColor.equals("RED")) {
+            soundManager.play("wind");
+        }
 
         String act = currentDiceColor.equals("GREEN") ? "MAJU" : "MUNDUR";
         String foodName = (result.getFood() != null) ? result.getFood().getName() :("-");
@@ -450,6 +458,10 @@ public class GameBoard extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 if (index < animationPath.size()) {
                     visualCurrentNode = animationPath.get(index);
+
+                    // 4. Play Sound Step Tiap Langkah
+                    soundManager.play("step");
+
                     boardPanel.repaint();
                     index++;
                 } else {
@@ -466,9 +478,13 @@ public class GameBoard extends JFrame {
         animationPath = null;
         boardPanel.repaint();
         updatePlayerListPanel((JPanel) rightPanel.getComponent(2));
-        newGameButton.setEnabled(true); // Enable new game setelah turn selesai
+        newGameButton.setEnabled(true);
 
         if (gameController.isGameEnded()) {
+            // 5. Play Sound Win & Stop BGM
+            soundManager.stop("bgm");
+            soundManager.play("win");
+
             JOptionPane.showMessageDialog(this,
                     "🏆 MENANG! 🏆\n" + result.getPlayer().getName() + " berhasil kabur!",
                     "Game Over", JOptionPane.INFORMATION_MESSAGE);
