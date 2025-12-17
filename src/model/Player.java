@@ -10,7 +10,6 @@ public class Player {
     private String color;
     private String imagePath; // Path ke file gambar
 
-    // Constructor updated
     public Player(String name, String color, String imagePath) {
         this.name = name;
         this.currentPosition = 1;
@@ -20,7 +19,6 @@ public class Player {
         this.imagePath = imagePath;
     }
 
-    // Logic movement tetap sama...
     public void moveForward(int numSteps) {
         for (int i = 0; i < numSteps; i++) {
             if (currentPosition < 64) {
@@ -30,6 +28,11 @@ public class Player {
                 break;
             }
         }
+    }
+
+    public void setPosition(int pos) {
+        this.currentPosition = pos;
+        this.steps.push(pos);
     }
 
     public void moveBackward(int numSteps) {

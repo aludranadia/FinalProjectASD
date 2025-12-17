@@ -1,6 +1,8 @@
 package controller;
 
 import model.*;
+
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.List; // Tambahkan import List
@@ -61,33 +63,72 @@ public class GameController {
 
     public TurnResult executeTurn() {
         if (gameEnded || currentPlayer == null) return null;
+
         Dice.DiceResult diceResult = dice.roll();
         int diceNumber = diceResult.getNumber();
         Food food = null;
-        int stepsMoved = 0;
+        int energySteps = 0;
         int oldPosition = currentPlayer.getCurrentPosition();
 
-        if (diceResult.isGreen()) {
-            food = Food.getFoodByDiceNumber(diceNumber);
-            stepsMoved = food.getEnergyValue();
-            currentPlayer.moveForward(stepsMoved);
-        } else {
-            stepsMoved = -diceNumber;
-            currentPlayer.moveBackward(diceNumber);
-        }
+        // List untuk merekam jejak langkah agar animasi akurat
+        List<Integer> movementPath = new ArrayList<>();
 
-        int currentPos = currentPlayer.getCurrentPosition();
-        int shortcutDest = graph.getShortcutDestination(currentPos);
         boolean usedShortcut = false;
 
-        if (shortcutDest != -1 && diceResult.isGreen()) {
-            currentPlayer.jumpTo(shortcutDest);
-            usedShortcut = true;
+        if (diceResult.isGreen()) {
+            // 1. Hitung Energi
+            food = Food.getFoodByDiceNumber(diceNumber);
+            energySteps = food.getEnergyValue();
+
+            // 2. Cek Syarat Shortcut: Posisi AWAL turn harus Prima (dan bukan 1)
+            boolean canUseShortcut = graph.isPrime(oldPosition);
+
+            // 3. Simulasi Gerakan Step-by-Step
+            int currentSimulatedPos = oldPosition;
+
+            for (int i = 0; i < energySteps; i++) {
+                // Cek kemenangan sebelum melangkah
+                if (currentSimulatedPos >= 64) break;
+
+                int destShortcut = graph.getShortcutDestination(currentSimulatedPos);
+
+                if (canUseShortcut && destShortcut != -1) {
+                    currentSimulatedPos = destShortcut;
+                    usedShortcut = true;
+                } else {
+                    currentSimulatedPos++;
+                }
+
+                if (currentSimulatedPos > 64) currentSimulatedPos = 64;
+
+                movementPath.add(currentSimulatedPos);
+
+                currentPlayer.setPosition(currentSimulatedPos);
+            }
+
+        } else {
+
+            energySteps = -diceNumber;
+
+            int stepsToMoveBack = diceNumber;
+            int currentSimulatedPos = oldPosition;
+
+            for(int i=0; i<stepsToMoveBack; i++){
+                if(currentSimulatedPos > 1) {
+                    currentSimulatedPos--; // Mundur linear visual
+                    movementPath.add(currentSimulatedPos);
+                }
+            }
+            currentPlayer.moveBackward(diceNumber);
         }
 
         if (currentPlayer.hasWon()) gameEnded = true;
 
-        TurnResult result = new TurnResult(currentPlayer, diceResult, food, oldPosition, currentPlayer.getCurrentPosition(), stepsMoved, usedShortcut);
+        TurnResult result = new TurnResult(
+                currentPlayer, diceResult, food,
+                oldPosition, currentPlayer.getCurrentPosition(),
+                energySteps, usedShortcut, movementPath
+        );
 
         if (!gameEnded) nextPlayer();
         return result;
@@ -112,12 +153,16 @@ public class GameController {
         private Food food;
         private int oldPosition, newPosition, stepsMoved;
         private boolean usedShortcut;
+        private List<Integer> movementPath;
 
-        public TurnResult(Player player, Dice.DiceResult diceResult, Food food, int oldPosition, int newPosition, int stepsMoved, boolean usedShortcut) {
+        public TurnResult(Player player, Dice.DiceResult diceResult, Food food,
+                          int oldPosition, int newPosition, int stepsMoved,
+                          boolean usedShortcut, List<Integer> movementPath) {
             this.player = player; this.diceResult = diceResult; this.food = food;
             this.oldPosition = oldPosition; this.newPosition = newPosition;
             this.stepsMoved = stepsMoved;
             this.usedShortcut = usedShortcut;
+            this.movementPath = movementPath;
         }
 
         public Player getPlayer() { return player; }
@@ -127,5 +172,6 @@ public class GameController {
         public int getNewPosition() { return newPosition; }
         public int getStepsMoved() { return stepsMoved; }
         public boolean isUsedShortcut() { return usedShortcut; }
+        public List<Integer> getMovementPath() { return movementPath; }
     }
 }

@@ -76,6 +76,14 @@ public class Graph {
         return shortcuts;
     }
 
+    public boolean isPrime(int num) {
+        if (num <= 1) return false; // 1 tidak terhitung prima
+        for (int i = 2; i <= Math.sqrt(num); i++) {
+            if (num % i == 0) return false;
+        }
+        return true;
+    }
+
     public int getShortcutDestination(int startNode) {
         return shortcuts.getOrDefault(startNode, -1);
     }
