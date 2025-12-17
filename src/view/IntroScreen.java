@@ -1,3 +1,5 @@
+// comment
+
 package view;
 
 import controller.GameController;
@@ -129,7 +131,7 @@ public class IntroScreen extends JFrame {
         playButton.addActionListener(e -> showPlayerCountDialog());
 
         gbc.gridy = 2;
-        gbc.insets = new Insets(0, 0, 30, 0);
+        gbc.insets = new Insets(20, 40, 20, 30);
         mainPanel.add(playButton, gbc);
 
         add(mainPanel);

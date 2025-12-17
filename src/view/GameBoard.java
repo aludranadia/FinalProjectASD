@@ -1,3 +1,5 @@
+// comment
+
 package view;
 
 import controller.GameController;
