@@ -1,15 +1,25 @@
 package model;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
+
 public class Graph {
     private static final int SIZE = 64;
     private int[][] adjacencyMatrix;
     private Node[] nodes;
+    private Map<Integer, Integer> shortcuts; // Key: Node Awal, Value: Node Tujuan
+    private Random random;
 
     public Graph() {
         adjacencyMatrix = new int[SIZE][SIZE];
         nodes = new Node[SIZE];
+        shortcuts = new HashMap<>();
+        random = new Random();
         initializeNodes();
         initializeAdjacencyMatrix();
+        // Generate shortcuts saat graph dibuat pertama kali
+        generateRandomShortcuts();
     }
 
     // Inisialisasi 64 nodes dengan posisi grid 8x8
@@ -37,6 +47,37 @@ public class Graph {
             adjacencyMatrix[i][i + 1] = 1;  // Node i terhubung ke node i+1
             adjacencyMatrix[i + 1][i] = 1;  // Bidirectional (untuk mundur)
         }
+    }
+
+    public void generateRandomShortcuts() {
+        shortcuts.clear();
+        int count = 0;
+        while (count < 5) {
+            // Pilih node awal acak (jangan node terakhir, min node 2 agar tidak langsung loncat dari start)
+            int startNode = random.nextInt(SIZE - 2) + 2;
+
+            // Pastikan node awal belum punya shortcut
+            if (shortcuts.containsKey(startNode)) continue;
+
+            // Pilih jarak lompatan acak (min 5 langkah, max 15 langkah) agar terasa dampaknya
+            int jumpDistance = random.nextInt(11) + 5;
+            int endNode = startNode + jumpDistance;
+
+            // Pastikan node tujuan valid (tidak melebihi 64)
+            if (endNode <= SIZE) {
+                shortcuts.put(startNode, endNode);
+                count++;
+                // System.out.println("Shortcut created: " + startNode + " -> " + endNode); // Debugging
+            }
+        }
+    }
+
+    public Map<Integer, Integer> getShortcuts() {
+        return shortcuts;
+    }
+
+    public int getShortcutDestination(int startNode) {
+        return shortcuts.getOrDefault(startNode, -1);
     }
 
     // Cek apakah ada koneksi antara 2 node

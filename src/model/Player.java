@@ -44,6 +44,13 @@ public class Player {
         }
     }
 
+    public void jumpTo(int destinationNodeNumber) {
+        if (destinationNodeNumber > currentPosition && destinationNodeNumber <= 64) {
+            this.currentPosition = destinationNodeNumber;
+            this.steps.push(currentPosition);
+        }
+    }
+
     public boolean hasWon() {
         return currentPosition == 64;
     }

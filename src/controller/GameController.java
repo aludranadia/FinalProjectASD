@@ -26,6 +26,7 @@ public class GameController {
         this.currentPlayer = null;
         this.gameStarted = false;
         this.gameEnded = false;
+        this.graph.generateRandomShortcuts();
     }
 
     // --- METHOD BARU: Untuk Setup Custom (Nama & Karakter) ---
@@ -75,9 +76,19 @@ public class GameController {
             currentPlayer.moveBackward(diceNumber);
         }
 
+        int currentPos = currentPlayer.getCurrentPosition();
+        int shortcutDest = graph.getShortcutDestination(currentPos);
+        boolean usedShortcut = false;
+
+        if (shortcutDest != -1 && diceResult.isGreen()) {
+            currentPlayer.jumpTo(shortcutDest);
+            usedShortcut = true;
+        }
+
         if (currentPlayer.hasWon()) gameEnded = true;
 
-        TurnResult result = new TurnResult(currentPlayer, diceResult, food, oldPosition, currentPlayer.getCurrentPosition(), stepsMoved);
+        TurnResult result = new TurnResult(currentPlayer, diceResult, food, oldPosition, currentPlayer.getCurrentPosition(), stepsMoved, usedShortcut);
+
         if (!gameEnded) nextPlayer();
         return result;
     }
@@ -100,15 +111,21 @@ public class GameController {
         private Dice.DiceResult diceResult;
         private Food food;
         private int oldPosition, newPosition, stepsMoved;
-        public TurnResult(Player player, Dice.DiceResult diceResult, Food food, int oldPosition, int newPosition, int stepsMoved) {
+        private boolean usedShortcut;
+
+        public TurnResult(Player player, Dice.DiceResult diceResult, Food food, int oldPosition, int newPosition, int stepsMoved, boolean usedShortcut) {
             this.player = player; this.diceResult = diceResult; this.food = food;
-            this.oldPosition = oldPosition; this.newPosition = newPosition; this.stepsMoved = stepsMoved;
+            this.oldPosition = oldPosition; this.newPosition = newPosition;
+            this.stepsMoved = stepsMoved;
+            this.usedShortcut = usedShortcut;
         }
+
         public Player getPlayer() { return player; }
         public Dice.DiceResult getDiceResult() { return diceResult; }
         public Food getFood() { return food; }
         public int getOldPosition() { return oldPosition; }
         public int getNewPosition() { return newPosition; }
         public int getStepsMoved() { return stepsMoved; }
+        public boolean isUsedShortcut() { return usedShortcut; }
     }
 }
