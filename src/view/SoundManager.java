@@ -4,56 +4,66 @@ import javax.sound.sampled.*;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 public class SoundManager {
     private Map<String, Clip> soundMap;
+    private Clip[] stepClips;
+    private Random random;
 
     // KONFIGURASI VOLUME
-    private static final float BGM_VOLUME = 0.40f; // Musik pelan (25%)
-    private static final float SFX_VOLUME = 0.95f; // Efek keras (95%)
+    private static final float BGM_VOLUME = 0.25f;
+    private static final float SFX_VOLUME = 0.90f;
 
     public SoundManager() {
         soundMap = new HashMap<>();
-        // Pastikan nama file sesuai dengan yang ada di folder resources/sounds/
-        loadSound("bgm", "resources/sounds/bgm.wav");
-        loadSound("step", "resources/sounds/step.wav");
+        random = new Random();
+
+        loadSound("intro_bgm", "resources/sounds/intro_bgm.wav"); // Musik Intro
+        loadSound("game_bgm", "resources/sounds/game_bgm.wav");   // Musik Main
+
         loadSound("wind", "resources/sounds/wind.wav");
         loadSound("win", "resources/sounds/win.wav");
+        loadSound("bonus", "resources/sounds/bonus.wav"); // Suara Kelipatan 5
+        loadSound("dash", "resources/sounds/dash.wav");   // Suara Shortest Path
+
+        stepClips = new Clip[2];
+        stepClips[0] = loadClipInternal("resources/sounds/step1.wav");
+        stepClips[1] = loadClipInternal("resources/sounds/step2.wav");
     }
 
-    private void loadSound(String name, String path) {
+    private Clip loadClipInternal(String path) {
         try {
             File file = new File(path);
             if (file.exists()) {
-                // 1. Ambil Input Stream asli
                 AudioInputStream audioIn = AudioSystem.getAudioInputStream(file);
                 AudioFormat baseFormat = audioIn.getFormat();
-
-                // 2. Buat format baru: 16-bit PCM Signed (Format Standar Java)
-                // Ini mengatasi masalah "24 bit not supported"
                 AudioFormat decodedFormat = new AudioFormat(
                         AudioFormat.Encoding.PCM_SIGNED,
                         baseFormat.getSampleRate(),
-                        16, // Paksa ke 16-bit
+                        16,
                         baseFormat.getChannels(),
                         baseFormat.getChannels() * 2,
                         baseFormat.getSampleRate(),
-                        false // Little Endian
+                        false
                 );
-
-                // 3. Konversi stream asli ke format 16-bit
                 AudioInputStream decodedAudioIn = AudioSystem.getAudioInputStream(decodedFormat, audioIn);
-
-                // 4. Masukkan ke Clip
                 Clip clip = AudioSystem.getClip();
                 clip.open(decodedAudioIn);
-                soundMap.put(name, clip);
-            } else {
-                System.err.println("Sound file missing: " + path);
+                return clip;
             }
         } catch (Exception e) {
-            System.err.println("Error loading sound (" + name + "): " + e.getMessage());
-            // Jangan printStackTrace agar log tidak penuh, cukup pesan errornya
+            System.err.println("Error loading clip " + path + ": " + e.getMessage());
+        }
+        return null;
+    }
+
+    private void loadSound(String name, String path) {
+        Clip clip = loadClipInternal(path);
+        if (clip != null) {
+            soundMap.put(name, clip);
+        } else {
+            System.err.println("Sound file missing: " + path);
         }
     }
 
@@ -67,9 +77,26 @@ public class SoundManager {
         }
     }
 
+    public void playStep() {
+        if (stepClips == null || stepClips.length == 0) return;
+
+        // Pilih index acak (0 atau 1)
+        int index = random.nextInt(stepClips.length);
+        Clip clip = stepClips[index];
+
+        if (clip != null) {
+            if (clip.isRunning()) clip.stop();
+            clip.setFramePosition(0);
+            // Volume langkah sedikit lebih kecil dari SFX utama agar tidak berisik
+            setClipVolume(clip, SFX_VOLUME * 0.7f);
+            clip.start();
+        }
+    }
+
     public void playLoop(String name) {
+        stopAllBGM();
         Clip clip = soundMap.get(name);
-        if (clip != null && !clip.isRunning()) {
+        if (clip != null) {
             clip.setFramePosition(0);
             setClipVolume(clip, BGM_VOLUME);
             clip.loop(Clip.LOOP_CONTINUOUSLY);
@@ -82,6 +109,12 @@ public class SoundManager {
         if (clip != null && clip.isRunning()) {
             clip.stop();
         }
+    }
+
+    public void stopAllBGM() {
+        stop("intro_bgm");
+        stop("game_bgm");
+        stop("win");
     }
 
     private void setClipVolume(Clip clip, float volume) {

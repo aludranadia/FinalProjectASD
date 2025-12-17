@@ -15,6 +15,7 @@ public class IntroScreen extends JFrame {
     private GameController gameController;
     private float pulseAlpha = 0.5f;
     private boolean pulseUp = true;
+    private SoundManager soundManager;
 
     // Daftar Avatar
     private final String[] AVATAR_PATHS = {
@@ -31,6 +32,10 @@ public class IntroScreen extends JFrame {
 
     public IntroScreen(GameController gameController) {
         this.gameController = gameController;
+
+        this.soundManager = new SoundManager();
+        this.soundManager.playLoop("intro_bgm");
+
         initComponents();
         startPulseAnimation();
     }
@@ -288,6 +293,7 @@ public class IntroScreen extends JFrame {
         JButton startBtn = createStyledButton("START ADVENTURE!", new Color(46, 204, 113), Color.WHITE);
         startBtn.setPreferredSize(new Dimension(250, 50));
         startBtn.addActionListener(e -> {
+            soundManager.stop("intro_bgm");
             List<String> names = new ArrayList<>();
             List<String> images = new ArrayList<>();
             for (int i = 0; i < playerCount; i++) {

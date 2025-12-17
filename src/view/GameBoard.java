@@ -416,13 +416,24 @@ public class GameBoard extends JFrame {
     }
 
     private void startMovementAnimation(GameController.TurnResult result, int delay) {
+        boolean isRunningFast = (delay < 100);
+
+        if (isRunningFast) {
+            soundManager.play("dash");
+        }
+
         animationTimer = new Timer(delay, new ActionListener() {
             int index = 0;
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (index < animationPath.size()) {
                     visualCurrentNode = animationPath.get(index);
-                    soundManager.play("step");
+
+                    if (isRunningFast) {
+                    } else {
+                        soundManager.playStep();
+                    }
+
                     boardPanel.repaint();
                     index++;
                 } else {
@@ -435,29 +446,28 @@ public class GameBoard extends JFrame {
     }
 
     private void endTurn(GameController.TurnResult result) {
-        animatingPlayer = null; animationPath = null;
-
-        if (result.getCoinEffect() != 0) {
-            String msg = (result.getCoinEffect() > 0)
-                    ? "Found " + result.getCoinEffect() + " coins!"
-                    : "Lost " + Math.abs(result.getCoinEffect()) + " coins!";
-            gameLogArea.append(">> " + msg + "\n");
-        }
-
+        animatingPlayer = null;
+        animationPath = null;
         boardPanel.repaint();
         updatePlayerListPanel((JPanel) rightPanel.getComponent(2));
         newGameButton.setEnabled(true);
 
         if (gameController.isGameEnded()) {
-            soundManager.stop("bgm");
+            soundManager.stopAllBGM();
             soundManager.play("win");
-            showLeaderboardDialog(result.getPlayer());
+
+            JOptionPane.showMessageDialog(this,
+                    "🏆 MENANG! 🏆\n" + result.getPlayer().getName() + " berhasil kabur!",
+                    "Game Over", JOptionPane.INFORMATION_MESSAGE);
             rollDiceButton.setEnabled(false);
         } else {
             rollDiceButton.setEnabled(true);
+
             if (result.isBonusTurn()) {
+                soundManager.play("bonus");
+
                 JOptionPane.showMessageDialog(this,
-                        " LUCKY SPOT! \n" +
+                        "✨ LUCKY SPOT! ✨\n" +
                                 result.getPlayer().getName() + " mendarat di Node " + result.getNewPosition() +
                                 "\n(Kelipatan 5). Roll Dadu Sekali Lagi!",
                         "Double Turn", JOptionPane.INFORMATION_MESSAGE);
