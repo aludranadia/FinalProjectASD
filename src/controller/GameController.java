@@ -3,6 +3,7 @@ package controller;
 import model.*;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.List; // Tambahkan import List
 
 public class GameController {
     private Graph graph;
@@ -20,7 +21,6 @@ public class GameController {
         this.gameEnded = false;
     }
 
-    // Method baru untuk reset game
     public void reset() {
         this.playerQueue.clear();
         this.currentPlayer = null;
@@ -28,14 +28,19 @@ public class GameController {
         this.gameEnded = false;
     }
 
-    public void initializePlayers(int numPlayers) {
-        String[] colors = {"red", "blue", "green", "yellow", "purple", "orange", "pink", "cyan"};
+    // --- METHOD BARU: Untuk Setup Custom (Nama & Karakter) ---
+    public void initializeCustomPlayers(List<String> names, List<String> imagePaths) {
+        String[] defaultColors = {"red", "blue", "green", "yellow", "purple", "orange", "pink", "cyan"};
 
-        for (int i = 0; i < numPlayers; i++) {
-            String name = "Player " + (i + 1);
-            String color = (i < colors.length) ? colors[i] : "gray";
-            // Asumsi nama file: "player 1.png", "player 2.png", dst.
-            String imagePath = "resources/images/player " + (i + 1) + ".png";
+        for (int i = 0; i < names.size(); i++) {
+            String name = names.get(i);
+            // Jika nama kosong, beri default
+            if (name == null || name.trim().isEmpty()) {
+                name = "Player " + (i + 1);
+            }
+
+            String imagePath = imagePaths.get(i);
+            String color = (i < defaultColors.length) ? defaultColors[i] : "gray";
 
             Player player = new Player(name, color, imagePath);
             playerQueue.offer(player);
@@ -44,6 +49,11 @@ public class GameController {
         if (!playerQueue.isEmpty()) {
             currentPlayer = playerQueue.peek();
         }
+    }
+
+    // Method lama (bisa dihapus atau dibiarkan untuk fallback)
+    public void initializePlayers(int numPlayers) {
+        // ... (Kode lama)
     }
 
     public void startGame() { gameStarted = true; gameEnded = false; }

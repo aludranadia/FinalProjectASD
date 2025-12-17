@@ -19,26 +19,28 @@ public class GameBoard extends JFrame {
     private JPanel boardPanel;
     private JPanel rightPanel;
     private JButton rollDiceButton;
-    private JButton newGameButton; // Tombol Baru
+    private JButton newGameButton;
     private JTextArea gameLogArea;
 
     private Map<String, BufferedImage> loadedImages;
     private BufferedImage backgroundImage;
 
     // KONFIGURASI POSISI GRID
-    private static final int GRID_START_X = 135;
-    private static final int GRID_START_Y = 115;
-    private static final int CELL_STEP_X = 73;
+    private static final int GRID_START_X = 143;
+    private static final int GRID_START_Y = 118;
+    private static final int CELL_STEP_X = 67;
     private static final int CELL_STEP_Y = 70;
-    private static final int CELL_SIZE = 60;
+    private static final int CELL_SIZE = 5;
     private static final int GRID_ROWS = 8;
     private static final int GRID_COLS = 8;
 
+    // Animasi Gerak
     private Timer animationTimer;
     private Player animatingPlayer;
     private int visualCurrentNode;
     private List<Integer> animationPath;
 
+    // Logika Dadu
     private int currentDiceNumber = 1;
     private String currentDiceColor = "WHITE";
     private boolean isRolling = false;
@@ -66,7 +68,7 @@ public class GameBoard extends JFrame {
 
     private void initComponents() {
         setTitle("Tunnel Escape - Gameplay");
-        setSize(1100, 850); // Sedikit dipertinggi untuk tombol baru
+        setSize(1100, 860);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(false);
@@ -123,26 +125,34 @@ public class GameBoard extends JFrame {
         dicePanel.setMaximumSize(new Dimension(250, 120));
         dicePanel.setOpaque(false);
 
-        // PERBAIKAN 5: Warna Teks Tombol Roll Dice Gelap
+        // TOMBOL ROLL DICE
         rollDiceButton = new JButton("ROLL DICE");
         rollDiceButton.setFont(new Font("Segoe UI", Font.BOLD, 20));
         rollDiceButton.setBackground(new Color(230, 126, 34)); // Orange
-        rollDiceButton.setForeground(new Color(30, 30, 30)); // Teks Gelap
+        rollDiceButton.setForeground(Color.BLACK); // Teks Hitam
         rollDiceButton.setFocusPainted(false);
         rollDiceButton.setAlignmentX(CENTER_ALIGNMENT);
         rollDiceButton.setMaximumSize(new Dimension(250, 50));
         rollDiceButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        rollDiceButton.setOpaque(true);
+        rollDiceButton.setBorderPainted(false);
+
         rollDiceButton.addActionListener(e -> handleRoll());
 
-        // PERBAIKAN 6: Tombol New Game
+        // TOMBOL NEW GAME
         newGameButton = new JButton("NEW GAME");
         newGameButton.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        newGameButton.setBackground(new Color(52, 152, 219)); // Biru
-        newGameButton.setForeground(Color.WHITE);
+        newGameButton.setBackground(new Color(52, 152, 219)); // Biru Muda
+        newGameButton.setForeground(Color.BLACK); // Teks Hitam
         newGameButton.setFocusPainted(false);
         newGameButton.setAlignmentX(CENTER_ALIGNMENT);
         newGameButton.setMaximumSize(new Dimension(250, 40));
         newGameButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        newGameButton.setOpaque(true);
+        newGameButton.setBorderPainted(false);
+
         newGameButton.addActionListener(e -> handleNewGame());
 
         gameLogArea = new JTextArea();
@@ -162,7 +172,7 @@ public class GameBoard extends JFrame {
         panel.add(dicePanel);
         panel.add(Box.createRigidArea(new Dimension(0, 10)));
         panel.add(rollDiceButton);
-        panel.add(Box.createRigidArea(new Dimension(0, 10))); // Jarak antar tombol
+        panel.add(Box.createRigidArea(new Dimension(0, 10)));
         panel.add(newGameButton);
         panel.add(Box.createRigidArea(new Dimension(0, 20)));
         panel.add(scrollLog);
@@ -184,9 +194,12 @@ public class GameBoard extends JFrame {
             card.setBackground(new Color(50, 40, 30));
             card.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(80, 60, 40)));
 
-            JLabel nameLbl = new JLabel(" " + p.getName());
+            // PERBAIKAN DISINI: Menghapus spasi/karakter aneh di depan nama
+            JLabel nameLbl = new JLabel(p.getName());
             nameLbl.setForeground(Color.WHITE);
             nameLbl.setFont(new Font("Segoe UI", Font.BOLD, 14));
+            // Menambah padding kiri sedikit
+            nameLbl.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
 
             JLabel posLbl = new JLabel("Node: " + p.getCurrentPosition() + " ");
             posLbl.setForeground(Color.ORANGE);
@@ -194,7 +207,8 @@ public class GameBoard extends JFrame {
             if (p == gameController.getCurrentPlayer()) {
                 card.setBackground(new Color(80, 60, 40));
                 nameLbl.setForeground(Color.YELLOW);
-                nameLbl.setText(" ▶ " + p.getName());
+                // Menggunakan tanda panah ASCII biasa agar aman
+                nameLbl.setText("> " + p.getName());
             }
 
             card.add(nameLbl, BorderLayout.WEST);
@@ -213,34 +227,38 @@ public class GameBoard extends JFrame {
             g2.drawImage(backgroundImage, 0, 0, boardPanel.getWidth(), boardPanel.getHeight(), null);
         }
 
-        g2.setFont(new Font("Arial", Font.BOLD, 12));
-        FontMetrics fm = g2.getFontMetrics();
+        g2.setFont(new Font("Arial", Font.BOLD, 13));
 
-        // PERBAIKAN 3: Loop untuk urutan angka mengular (Boustrophedon)
+        // GRID LOOP (MENGULAR)
         for (int row = 0; row < GRID_ROWS; row++) {
             for (int col = 0; col < GRID_COLS; col++) {
                 int nodeNum;
                 if (row % 2 == 0) {
-                    // Baris Genap (0, 2, ...): Kiri ke Kanan (1-8, 17-24, ...)
                     nodeNum = (row * GRID_COLS) + col + 1;
                 } else {
-                    // Baris Ganjil (1, 3, ...): Kanan ke Kiri (16-9, 32-25, ...)
                     nodeNum = (row * GRID_COLS) + (GRID_COLS - 1 - col) + 1;
                 }
 
                 int x = GRID_START_X + (col * CELL_STEP_X);
                 int y = GRID_START_Y + (row * CELL_STEP_Y);
 
-                // PERBAIKAN 4: Posisi angka digeser lebih ke kiri (x+3, y+15)
                 String numStr = String.valueOf(nodeNum);
-                g2.setColor(new Color(0,0,0, 150));
-                g2.drawString(numStr, x + 4, y + 16); // Shadow
-                g2.setColor(new Color(255, 255, 255, 180));
-                g2.drawString(numStr, x + 3, y + 15); // Teks
+
+                // ADJUSTMENT POSISI ANGKA
+                int textX = x + 10;
+                int textY = y + 25;
+
+                // Shadow
+                g2.setColor(new Color(0,0,0, 180));
+                g2.drawString(numStr, textX + 1, textY + 1);
+
+                // Text Utama
+                g2.setColor(new Color(255, 255, 255, 220));
+                g2.drawString(numStr, textX, textY);
             }
         }
 
-        // 3. Draw Players
+        // PLAYER DRAWING
         Map<Integer, java.util.List<Player>> mapPos = new HashMap<>();
         for (Player p : gameController.getPlayerQueue()) {
             int drawPos = p.getCurrentPosition();
@@ -254,7 +272,7 @@ public class GameBoard extends JFrame {
             int pos = entry.getKey();
             if (pos < 1 || pos > 64) continue;
 
-            // Cari koordinat row/col berdasarkan nomor node yang mengular
+            // Hitung row/col berdasarkan logika mengular
             int row = (pos - 1) / GRID_COLS;
             int col;
             if (row % 2 == 0) {
@@ -277,9 +295,8 @@ public class GameBoard extends JFrame {
                 int py = cellY + (CELL_SIZE/2) - 20;
 
                 BufferedImage img = loadedImages.get(p.getImagePath());
-
                 g2.setColor(new Color(0,0,0,150));
-                g2.fillOval(px+5, py+35, 30, 8);
+                g2.fillOval(px+5, py+35, 30, 8); // Bayangan player
 
                 if (img != null) {
                     g2.drawImage(img, px, py, 40, 40, null);
@@ -334,7 +351,7 @@ public class GameBoard extends JFrame {
 
         isRolling = true;
         rollDiceButton.setEnabled(false);
-        newGameButton.setEnabled(false); // Disable new game saat roll
+        newGameButton.setEnabled(false);
 
         Timer rollTimer = new Timer(100, new ActionListener() {
             int count = 0;
@@ -407,17 +424,17 @@ public class GameBoard extends JFrame {
     private void endTurn(GameController.TurnResult result) {
         animatingPlayer = null;
         animationPath = null;
+
         boardPanel.repaint();
         updatePlayerListPanel((JPanel) rightPanel.getComponent(2));
-        newGameButton.setEnabled(true); // Enable new game setelah turn selesai
+        newGameButton.setEnabled(true);
+        rollDiceButton.setEnabled(true);
 
         if (gameController.isGameEnded()) {
             JOptionPane.showMessageDialog(this,
                     "🏆 MENANG! 🏆\n" + result.getPlayer().getName() + " berhasil kabur!",
                     "Game Over", JOptionPane.INFORMATION_MESSAGE);
             rollDiceButton.setEnabled(false);
-        } else {
-            rollDiceButton.setEnabled(true);
         }
     }
 }
