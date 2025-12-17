@@ -34,8 +34,8 @@ public class GameBoard extends JFrame {
     // --- KONFIGURASI POSISI GRID (FINAL STATIS) ---
     private static final int GRID_START_X = 155;
     private static final int GRID_START_Y = 137;
-    private static final int CELL_STEP_X = 78;
-    private static final int CELL_STEP_Y = 74;
+    private static final int CELL_STEP_X = 73;
+    private static final int CELL_STEP_Y = 75;
 
     private static final int GRID_ROWS = 8;
     private static final int GRID_COLS = 8;
@@ -61,7 +61,7 @@ public class GameBoard extends JFrame {
 
     private void loadResources() {
         try {
-            File bgFile = new File("resources/images/background.png");
+            File bgFile = new File("resources/images/bg.png");
             if (bgFile.exists()) backgroundImage = ImageIO.read(bgFile);
 
             File shoeFile = new File("resources/images/shoe.png");
