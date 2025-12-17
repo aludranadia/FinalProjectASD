@@ -491,6 +491,17 @@ public class GameBoard extends JFrame {
             rollDiceButton.setEnabled(false);
         } else {
             rollDiceButton.setEnabled(true);
+
+            if (result.isBonusTurn()) {
+
+                JOptionPane.showMessageDialog(this,
+                        " LUCKY SPOT! \n" +
+                                result.getPlayer().getName() + " mendarat di Node " + result.getNewPosition() +
+                                "\n(Kelipatan 5). Roll Dadu Sekali Lagi!",
+                        "Double Turn", JOptionPane.INFORMATION_MESSAGE);
+
+            }
+
         }
     }
 }

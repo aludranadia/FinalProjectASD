@@ -124,13 +124,21 @@ public class GameController {
 
         if (currentPlayer.hasWon()) gameEnded = true;
 
+        boolean bonusTurn = false;
+        int finalPos = currentPlayer.getCurrentPosition();
+        if (!gameEnded && finalPos % 5 == 0 && finalPos != 0) {
+            bonusTurn = true;
+        }
+
         TurnResult result = new TurnResult(
                 currentPlayer, diceResult, food,
                 oldPosition, currentPlayer.getCurrentPosition(),
-                energySteps, usedShortcut, movementPath
+                energySteps, usedShortcut, movementPath, bonusTurn
         );
 
-        if (!gameEnded) nextPlayer();
+        if (!gameEnded && !bonusTurn) {
+            nextPlayer();
+        }
         return result;
     }
 
@@ -154,15 +162,17 @@ public class GameController {
         private int oldPosition, newPosition, stepsMoved;
         private boolean usedShortcut;
         private List<Integer> movementPath;
+        private boolean bonusTurn;
 
         public TurnResult(Player player, Dice.DiceResult diceResult, Food food,
                           int oldPosition, int newPosition, int stepsMoved,
-                          boolean usedShortcut, List<Integer> movementPath) {
+                          boolean usedShortcut, List<Integer> movementPath, boolean bonusTurn) {
             this.player = player; this.diceResult = diceResult; this.food = food;
             this.oldPosition = oldPosition; this.newPosition = newPosition;
             this.stepsMoved = stepsMoved;
             this.usedShortcut = usedShortcut;
             this.movementPath = movementPath;
+            this.bonusTurn = bonusTurn;
         }
 
         public Player getPlayer() { return player; }
@@ -173,5 +183,6 @@ public class GameController {
         public int getStepsMoved() { return stepsMoved; }
         public boolean isUsedShortcut() { return usedShortcut; }
         public List<Integer> getMovementPath() { return movementPath; }
+        public boolean isBonusTurn() { return bonusTurn; }
     }
 }
