@@ -53,7 +53,7 @@ public class GameBoard extends JFrame {
         this.gameController = gameController;
         this.loadedImages = new HashMap<>();
         this.soundManager = new SoundManager();
-        this.soundManager.playLoop("bgm");
+        this.soundManager.playLoop("game_bgm");
 
         loadResources();
         initComponents();
@@ -179,7 +179,7 @@ public class GameBoard extends JFrame {
     }
 
     private void handleNewGame() {
-        soundManager.stop("bgm");
+        soundManager.stop("game_bgm");
         gameController.reset();
         this.dispose();
         new IntroScreen(gameController).setVisible(true);
@@ -453,7 +453,7 @@ public class GameBoard extends JFrame {
         newGameButton.setEnabled(true);
 
         if (gameController.isGameEnded()) {
-            soundManager.stopAllBGM();
+            soundManager.stop("game_bgm");
             soundManager.play("win");
 
             JOptionPane.showMessageDialog(this,
