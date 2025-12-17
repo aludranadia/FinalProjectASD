@@ -9,7 +9,7 @@ public class SoundManager {
     private Map<String, Clip> soundMap;
 
     // KONFIGURASI VOLUME
-    private static final float BGM_VOLUME = 0.25f; // Musik pelan (25%)
+    private static final float BGM_VOLUME = 0.40f; // Musik pelan (25%)
     private static final float SFX_VOLUME = 0.95f; // Efek keras (95%)
 
     public SoundManager() {
