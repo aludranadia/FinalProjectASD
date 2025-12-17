@@ -20,12 +20,24 @@ public class GameController {
         this.gameEnded = false;
     }
 
-    // Inisialisasi pemain
+    // Method baru untuk reset game
+    public void reset() {
+        this.playerQueue.clear();
+        this.currentPlayer = null;
+        this.gameStarted = false;
+        this.gameEnded = false;
+    }
+
     public void initializePlayers(int numPlayers) {
         String[] colors = {"red", "blue", "green", "yellow", "purple", "orange", "pink", "cyan"};
 
-        for (int i = 0; i < numPlayers && i < colors.length; i++) {
-            Player player = new Player("Player " + (i + 1), colors[i]);
+        for (int i = 0; i < numPlayers; i++) {
+            String name = "Player " + (i + 1);
+            String color = (i < colors.length) ? colors[i] : "gray";
+            // Asumsi nama file: "player 1.png", "player 2.png", dst.
+            String imagePath = "resources/images/player " + (i + 1) + ".png";
+
+            Player player = new Player(name, color, imagePath);
             playerQueue.offer(player);
         }
 
@@ -34,74 +46,38 @@ public class GameController {
         }
     }
 
-    // Start game
-    public void startGame() {
-        gameStarted = true;
-        gameEnded = false;
-    }
+    public void startGame() { gameStarted = true; gameEnded = false; }
 
-    // Execute turn untuk current player
     public TurnResult executeTurn() {
-        if (gameEnded || currentPlayer == null) {
-            return null;
-        }
-
-        // Roll dadu
+        if (gameEnded || currentPlayer == null) return null;
         Dice.DiceResult diceResult = dice.roll();
         int diceNumber = diceResult.getNumber();
-        String diceColor = diceResult.getColor();
-
         Food food = null;
         int stepsMoved = 0;
         int oldPosition = currentPlayer.getCurrentPosition();
 
-        // Proses berdasarkan warna dadu
         if (diceResult.isGreen()) {
-            // Dapat makanan dan energi untuk maju
             food = Food.getFoodByDiceNumber(diceNumber);
             stepsMoved = food.getEnergyValue();
             currentPlayer.moveForward(stepsMoved);
         } else {
-            // Dadu merah - mundur
-            stepsMoved = -diceNumber;  // Negatif untuk mundur
+            stepsMoved = -diceNumber;
             currentPlayer.moveBackward(diceNumber);
         }
 
-        int newPosition = currentPlayer.getCurrentPosition();
+        if (currentPlayer.hasWon()) gameEnded = true;
 
-        // Cek apakah player menang
-        if (currentPlayer.hasWon()) {
-            gameEnded = true;
-        }
-
-        // Create turn result
-        TurnResult result = new TurnResult(
-                currentPlayer,
-                diceResult,
-                food,
-                oldPosition,
-                newPosition,
-                stepsMoved
-        );
-
-        // Pindah ke player berikutnya (poll dan push back ke queue)
-        if (!gameEnded) {
-            nextPlayer();
-        }
-
+        TurnResult result = new TurnResult(currentPlayer, diceResult, food, oldPosition, currentPlayer.getCurrentPosition(), stepsMoved);
+        if (!gameEnded) nextPlayer();
         return result;
     }
 
-    // Pindah ke player berikutnya menggunakan Queue
     private void nextPlayer() {
-        Player player = playerQueue.poll();  // Ambil dari depan
-        if (player != null) {
-            playerQueue.offer(player);       // Taruh kembali di belakang
-        }
-        currentPlayer = playerQueue.peek();  // Set current player
+        Player player = playerQueue.poll();
+        if (player != null) playerQueue.offer(player);
+        currentPlayer = playerQueue.peek();
     }
 
-    // Getters
     public Graph getGraph() { return graph; }
     public Player getCurrentPlayer() { return currentPlayer; }
     public Queue<Player> getPlayerQueue() { return playerQueue; }
@@ -109,26 +85,15 @@ public class GameController {
     public boolean isGameEnded() { return gameEnded; }
     public Dice getDice() { return dice; }
 
-    // Inner class untuk menyimpan hasil turn
     public static class TurnResult {
         private Player player;
         private Dice.DiceResult diceResult;
         private Food food;
-        private int oldPosition;
-        private int newPosition;
-        private int stepsMoved;
-
-        public TurnResult(Player player, Dice.DiceResult diceResult, Food food,
-                          int oldPosition, int newPosition, int stepsMoved) {
-            this.player = player;
-            this.diceResult = diceResult;
-            this.food = food;
-            this.oldPosition = oldPosition;
-            this.newPosition = newPosition;
-            this.stepsMoved = stepsMoved;
+        private int oldPosition, newPosition, stepsMoved;
+        public TurnResult(Player player, Dice.DiceResult diceResult, Food food, int oldPosition, int newPosition, int stepsMoved) {
+            this.player = player; this.diceResult = diceResult; this.food = food;
+            this.oldPosition = oldPosition; this.newPosition = newPosition; this.stepsMoved = stepsMoved;
         }
-
-        // Getters
         public Player getPlayer() { return player; }
         public Dice.DiceResult getDiceResult() { return diceResult; }
         public Food getFood() { return food; }
