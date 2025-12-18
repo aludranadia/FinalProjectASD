@@ -3,6 +3,8 @@ package tunnel.view;
 import tunnel.controller.GameController;
 import tunnel.model.Player;
 import tunnel.model.Node;
+// Import MainLauncher agar bisa kembali ke menu
+import main.MainLauncher;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -23,6 +25,7 @@ public class GameBoard extends JFrame {
     private JPanel rightPanel;
     private JButton rollDiceButton;
     private JButton newGameButton;
+    private JButton backButton; // Tombol Back baru
     private JTextArea gameLogArea;
 
     private Map<String, BufferedImage> loadedImages;
@@ -45,17 +48,14 @@ public class GameBoard extends JFrame {
     private int visualCurrentNode;
     private List<Integer> animationPath;
 
-    private static final int SPEED_NORMAL = 300; // Milidetik per langkah biasa
-    private static final int SPEED_FAST = 100;   // Milidetik saat lari di shortcut
+    private static final int SPEED_NORMAL = 300;
+    private static final int SPEED_FAST = 100;
 
     private int currentDiceNumber = 1;
     private String currentDiceColor = "WHITE";
     private boolean isRolling = false;
 
-    // FONT KHUSUS AGAR EMOJI KEDETECT DI WINDOWS
     private static final Font EMOJI_FONT = new Font("Segoe UI Emoji", Font.BOLD, 14);
-
-    // WARNA EMAS YANG KONSISTEN
     private static final Color GOLD_COLOR = new Color(255, 215, 0);
 
     public GameBoard(GameController gameController) {
@@ -88,9 +88,10 @@ public class GameBoard extends JFrame {
     private void initComponents() {
         setTitle("Tunnel Escape - Gameplay");
         setSize(1150, 850);
+        // Ubah jadi DISPOSE agar tidak mematikan seluruh aplikasi saat ditutup manual (opsional)
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        setResizable(false); // STATIS
+        setResizable(false);
 
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.setBackground(new Color(15, 10, 5));
@@ -102,7 +103,6 @@ public class GameBoard extends JFrame {
                 drawGameGraphics((Graphics2D) g);
             }
         };
-        // Ukuran Board Fix
         boardPanel.setPreferredSize(new Dimension(850, 800));
         boardPanel.setBackground(new Color(15, 10, 5));
 
@@ -131,6 +131,7 @@ public class GameBoard extends JFrame {
         playerListPanel.setOpaque(false);
         updatePlayerListPanel(playerListPanel);
 
+        // Panel Dadu
         JPanel dicePanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -142,50 +143,77 @@ public class GameBoard extends JFrame {
         dicePanel.setMaximumSize(new Dimension(250, 120));
         dicePanel.setOpaque(false);
 
-        rollDiceButton = new JButton("ROLL DICE");
-        rollDiceButton.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        rollDiceButton.setBackground(new Color(230, 126, 34));
-        rollDiceButton.setForeground(new Color(30, 30, 30));
-        rollDiceButton.setFocusPainted(false);
-        rollDiceButton.setAlignmentX(CENTER_ALIGNMENT);
-        rollDiceButton.setMaximumSize(new Dimension(250, 50));
-        rollDiceButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        // --- PERBAIKAN TOMBOL ---
+        // 1. ROLL DICE
+        rollDiceButton = createStyledButton("ROLL DICE", new Color(230, 126, 34), Color.BLACK);
         rollDiceButton.addActionListener(e -> handleRoll());
 
-        newGameButton = new JButton("NEW GAME");
-        newGameButton.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        newGameButton.setBackground(new Color(52, 152, 219));
-        newGameButton.setForeground(Color.WHITE);
-        newGameButton.setFocusPainted(false);
-        newGameButton.setAlignmentX(CENTER_ALIGNMENT);
-        newGameButton.setMaximumSize(new Dimension(250, 40));
-        newGameButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        // 2. NEW GAME
+        newGameButton = createStyledButton("NEW GAME", new Color(52, 152, 219), Color.WHITE);
         newGameButton.addActionListener(e -> handleNewGame());
 
+        // 3. BACK TO MENU (NEW)
+        backButton = createStyledButton("🏠 MENU", new Color(192, 57, 43), Color.WHITE);
+        backButton.addActionListener(e -> {
+            soundManager.stop("game_bgm");
+            this.dispose();
+            new MainLauncher().setVisible(true);
+        });
+
+        // Log Area
         gameLogArea = new JTextArea();
         gameLogArea.setEditable(false);
         gameLogArea.setBackground(new Color(40, 30, 20));
         gameLogArea.setForeground(new Color(200, 255, 200));
-        // Ganti font log juga biar emoji kebaca
         gameLogArea.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 12));
 
         JScrollPane scrollLog = new JScrollPane(gameLogArea);
         scrollLog.setPreferredSize(new Dimension(250, 150));
         scrollLog.setBorder(BorderFactory.createLineBorder(new Color(100, 80, 60)));
 
+        // ADD COMPONENTS TO PANEL
         panel.add(header);
         panel.add(Box.createRigidArea(new Dimension(0, 20)));
         panel.add(playerListPanel);
-        panel.add(Box.createVerticalGlue());
+        panel.add(Box.createVerticalGlue()); // Push components down
         panel.add(dicePanel);
         panel.add(Box.createRigidArea(new Dimension(0, 10)));
+
         panel.add(rollDiceButton);
         panel.add(Box.createRigidArea(new Dimension(0, 10)));
-        panel.add(newGameButton);
+
+        // Container untuk tombol kecil (New Game & Back) agar sejajar
+        JPanel subBtnPanel = new JPanel(new GridLayout(1, 2, 10, 0));
+        subBtnPanel.setOpaque(false);
+        subBtnPanel.setMaximumSize(new Dimension(250, 45));
+
+        // Sesuaikan font size tombol kecil
+        newGameButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        backButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
+
+        subBtnPanel.add(newGameButton);
+        subBtnPanel.add(backButton);
+        panel.add(subBtnPanel);
+
         panel.add(Box.createRigidArea(new Dimension(0, 20)));
         panel.add(scrollLog);
 
         return panel;
+    }
+
+    // --- HELPER STYLE TOMBOL (AGAR PASTI KELIHATAN) ---
+    private JButton createStyledButton(String text, Color bg, Color fg) {
+        JButton btn = new JButton(text);
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        btn.setBackground(bg);
+        btn.setForeground(fg);
+        btn.setFocusPainted(false);
+        btn.setBorderPainted(false); // Flat style
+        btn.setOpaque(true);         // Wajib true agar warna background muncul
+        btn.setAlignmentX(CENTER_ALIGNMENT);
+        btn.setMaximumSize(new Dimension(250, 50));
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        return btn;
     }
 
     private void handleNewGame() {
@@ -253,15 +281,13 @@ public class GameBoard extends JFrame {
                 int centerX = centerPt.x;
                 int centerY = centerPt.y;
 
-                // A. Angka Node (Tengah, Ghostly White)
                 String numStr = String.valueOf(nodeNum);
                 int textW = fm.stringWidth(numStr);
                 int textH = fm.getAscent() - fm.getDescent();
 
-                g2.setColor(new Color(255, 255, 255, 60)); // Transparan
+                g2.setColor(new Color(255, 255, 255, 60));
                 g2.drawString(numStr, centerX - (textW / 2), centerY + (textH / 2));
 
-                // B. Nilai Koin (Pojok Kanan Atas)
                 Node node = gameController.getGraph().getNode(nodeNum);
                 if (node != null && node.getCoinValue() != 0) {
                     int val = node.getCoinValue();
@@ -277,8 +303,8 @@ public class GameBoard extends JFrame {
                     g2.drawString(coinText, coinX + 1, coinY + 1);
                     g2.drawString(coinText, coinX - 1, coinY - 1);
 
-                    if (val > 0) g2.setColor(new Color(255, 215, 0)); // Emas
-                    else g2.setColor(new Color(255, 80, 80)); // Merah
+                    if (val > 0) g2.setColor(new Color(255, 215, 0));
+                    else g2.setColor(new Color(255, 80, 80));
                     g2.drawString(coinText, coinX, coinY);
 
                     g2.setFont(originalFont);
@@ -319,7 +345,7 @@ public class GameBoard extends JFrame {
                 Player p = playersHere.get(i);
                 int offsetX = (count > 1) ? (i * 15) - ((count - 1) * 7) : 0;
                 int px = pt.x - 20 + offsetX;
-                int py = pt.y - 35; // Player di atas titik tengah
+                int py = pt.y - 35;
 
                 BufferedImage img = loadedImages.get(p.getImagePath());
                 g2.setColor(new Color(0,0,0,150)); g2.fillOval(px+5, py+35, 30, 8);
@@ -336,7 +362,6 @@ public class GameBoard extends JFrame {
         }
     }
 
-    // Helper: Koordinat STATIS (tanpa scaling)
     private Point getNodeCoordinates(int nodeNum) {
         if (nodeNum < 1 || nodeNum > 64) return null;
         int row = (nodeNum - 1) / GRID_COLS;
@@ -517,7 +542,6 @@ public class GameBoard extends JFrame {
         }
     }
 
-    // --- PERBAIKAN VISIBILITAS LEADERBOARD DI SINI ---
     private void showLeaderboardDialog() {
         JDialog dialog = new JDialog(this, "GAME OVER - RESULTS", true);
         dialog.setSize(600, 650);
@@ -534,11 +558,11 @@ public class GameBoard extends JFrame {
         headerPanel.add(header);
         dialog.add(headerPanel, BorderLayout.NORTH);
 
-        // Tabbed Pane Styling - PERBAIKAN WARNA TAB
+        // Tabbed Pane Styling
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        tabbedPane.setBackground(new Color(50, 45, 40)); // Warna background tab yang tidak dipilih
-        tabbedPane.setForeground(Color.WHITE); // Warna TEKS tab (agar terlihat saat tidak dipilih)
+        tabbedPane.setBackground(new Color(50, 45, 40));
+        tabbedPane.setForeground(Color.WHITE);
 
         // --- TAB 1: CURRENT MATCH ---
         JPanel rankingPanel = new JPanel();
@@ -546,10 +570,9 @@ public class GameBoard extends JFrame {
         rankingPanel.setBackground(new Color(40, 35, 30));
         rankingPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
 
-        // PERBAIKAN WARNA SUB-JUDUL JADI PUTIH/TERANG
         JLabel subTitle = new JLabel("📊 RANKING BASED ON POINTS");
         subTitle.setFont(EMOJI_FONT);
-        subTitle.setForeground(Color.WHITE); // Diubah jadi Putih agar kontras
+        subTitle.setForeground(Color.WHITE);
         subTitle.setAlignmentX(CENTER_ALIGNMENT);
         rankingPanel.add(subTitle);
         rankingPanel.add(Box.createRigidArea(new Dimension(0, 15)));
@@ -574,9 +597,8 @@ public class GameBoard extends JFrame {
         hallOfFamePanel.setBackground(new Color(30, 25, 35));
         hallOfFamePanel.setBorder(new EmptyBorder(20, 20, 20, 20));
 
-        // PERBAIKAN WARNA SUB-JUDUL JADI EMAS TERANG
         JLabel winTitle = new JLabel("👑 TOP WINNERS (All Time)");
-        winTitle.setForeground(GOLD_COLOR); // Diubah jadi Emas Terang
+        winTitle.setForeground(GOLD_COLOR);
         winTitle.setFont(EMOJI_FONT);
         winTitle.setAlignmentX(CENTER_ALIGNMENT);
         hallOfFamePanel.add(winTitle);
@@ -593,9 +615,8 @@ public class GameBoard extends JFrame {
 
         hallOfFamePanel.add(Box.createRigidArea(new Dimension(0, 20)));
 
-        // PERBAIKAN WARNA SUB-JUDUL JADI EMAS TERANG
         JLabel scoreTitle = new JLabel("🔥 LEGENDARY HIGH SCORES");
-        scoreTitle.setForeground(GOLD_COLOR); // Diubah jadi Emas Terang
+        scoreTitle.setForeground(GOLD_COLOR);
         scoreTitle.setFont(EMOJI_FONT);
         scoreTitle.setAlignmentX(CENTER_ALIGNMENT);
         hallOfFamePanel.add(scoreTitle);

@@ -1,5 +1,9 @@
+package main;
+
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 // Import komponen dari Game 1 (Tunnel)
 import tunnel.controller.GameController;
@@ -12,40 +16,40 @@ public class MainLauncher extends JFrame {
 
     public MainLauncher() {
         setTitle("Final Project ASD - Game Center");
-        setSize(500, 400);
+        setSize(500, 450); // Ukuran sedikit diperbesar agar lega
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new GridBagLayout());
 
+        // Background Biru Gelap Elegan
         getContentPane().setBackground(new Color(44, 62, 80));
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(15, 15, 15, 15); // Jarak antar elemen
+        gbc.insets = new Insets(15, 15, 15, 15);
         gbc.gridx = 0;
-        gbc.fill = GridBagConstraints.HORIZONTAL; // Tombol memenuhi lebar
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
         // --- JUDUL ---
         JLabel titleLabel = new JLabel("PILIH GAME", SwingConstants.CENTER);
-        titleLabel.setFont(new Font("Impact", Font.BOLD, 36));
+        titleLabel.setFont(new Font("Impact", Font.BOLD, 42));
         titleLabel.setForeground(new Color(236, 240, 241));
         gbc.gridy = 0;
         add(titleLabel, gbc);
 
         // --- TOMBOL GAME 1: TUNNEL ESCAPE ---
-        JButton btnTunnel = createStyledButton("🎮 Tunnel Escape (Queue & Stack)");
+        JButton btnTunnel = createStyledButton("Tunnel Escape", new Color(230, 126, 34));
         btnTunnel.addActionListener(e -> launchTunnelGame());
         gbc.gridy = 1;
         add(btnTunnel, gbc);
 
         // --- TOMBOL GAME 2: MAZE SOLVER ---
-        JButton btnMaze = createStyledButton("🧠 Maze Graph Solver (BFS/DFS/A*)");
+        JButton btnMaze = createStyledButton("Maze Graph Solver", new Color(52, 152, 219));
         btnMaze.addActionListener(e -> launchMazeGame());
         gbc.gridy = 2;
         add(btnMaze, gbc);
 
         // --- TOMBOL KELUAR ---
-        JButton btnExit = createStyledButton("❌ Keluar");
-        btnExit.setBackground(new Color(192, 57, 43)); // Merah
+        JButton btnExit = createStyledButton("Keluar", new Color(192, 57, 43));
         btnExit.addActionListener(e -> System.exit(0));
         gbc.gridy = 3;
         add(btnExit, gbc);
@@ -53,36 +57,47 @@ public class MainLauncher extends JFrame {
 
     // --- LOGIKA MEMBUKA GAME TUNNEL ---
     private void launchTunnelGame() {
-        this.dispose(); // Tutup Launcher
+        this.dispose(); // Tutup Menu Utama
         SwingUtilities.invokeLater(() -> {
-            // Panggil Controller & View Game Tunnel
             GameController controller = new GameController();
             new IntroScreen(controller).setVisible(true);
         });
     }
 
+    // --- LOGIKA MEMBUKA GAME MAZE ---
     private void launchMazeGame() {
-        this.dispose(); // Tutup Launcher
+        this.dispose(); // Tutup Menu Utama
         SwingUtilities.invokeLater(() -> {
             JFrame mazeFrame = new JFrame("Maze Graph Solver - BFS/DFS/Dijkstra/A*");
-            mazeFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            mazeFrame.setSize(1000, 750);
+            mazeFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); // Jangan exit app, cuma close window
+            mazeFrame.setSize(1000, 800);
             mazeFrame.setLocationRelativeTo(null);
             mazeFrame.setResizable(false);
 
+            // Tambahkan Panel Maze
             mazeFrame.add(new MazePanel());
+
+            // Listener jika user menekan tombol X (close) di window, kembali ke menu
+            mazeFrame.addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosed(WindowEvent e) {
+                    new MainLauncher().setVisible(true);
+                }
+            });
 
             mazeFrame.setVisible(true);
         });
     }
 
-    private JButton createStyledButton(String text) {
+    private JButton createStyledButton(String text, Color bg) {
         JButton btn = new JButton(text);
         btn.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        btn.setBackground(new Color(230, 126, 34));
-        btn.setForeground(Color.BLACK);
+        btn.setBackground(bg);
+        btn.setForeground(Color.WHITE); // Teks Putih agar kontras
         btn.setFocusPainted(false);
-        btn.setPreferredSize(new Dimension(300, 50));
+        btn.setBorderPainted(false); // Flat style
+        btn.setOpaque(true);
+        btn.setPreferredSize(new Dimension(350, 55));
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         return btn;
     }
