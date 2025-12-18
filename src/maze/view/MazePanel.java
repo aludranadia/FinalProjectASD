@@ -84,10 +84,18 @@ public class MazePanel extends JPanel {
         JButton btnAStar = createStyledButton("A* (Smart)", new Color(241, 196, 15));
         btnAStar.addActionListener(e -> runSolver("A*"));
 
+        JButton btnPrim = createStyledButton("Prim", new Color(155, 89, 182)); // Ungu
+        btnPrim.addActionListener(e -> runSolver("Prim"));
+
+        JButton btnKruskal = createStyledButton("Kruskal", new Color(231, 76, 60)); // Merah
+        btnKruskal.addActionListener(e -> runSolver("Kruskal"));
+
         algoPanel.add(btnBFS);
         algoPanel.add(btnDFS);
         algoPanel.add(btnDijkstra);
         algoPanel.add(btnAStar);
+        algoPanel.add(btnPrim);
+        algoPanel.add(btnKruskal);
 
         // Baris 2: Generate & Back
         JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
@@ -129,6 +137,8 @@ public class MazePanel extends JPanel {
             case "DFS": result = solver.solveDFS(mazeGraph); break;
             case "Dijkstra": result = solver.solveDijkstra(mazeGraph); break;
             case "A*": result = solver.solveAStar(mazeGraph); break;
+            case "Prim": result = solver.solvePrim(mazeGraph); break;
+            case "Kruskal": result = solver.solveKruskal(mazeGraph); break;
         }
 
         if (result != null) {
