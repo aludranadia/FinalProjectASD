@@ -6,6 +6,7 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -44,9 +45,13 @@ public class IntroScreen extends JFrame {
 
     private void loadBackground() {
         try {
-            File bgFile = new File("resources/tunnel/images/bg.png");
+            // --- PERUBAHAN DI SINI ---
+            // Mengganti nama file menjadi BgIntro.png
+            File bgFile = new File("resources/tunnel/images/BgIntro.png");
             if (bgFile.exists()) {
                 backgroundImage = ImageIO.read(bgFile);
+            } else {
+                System.err.println("Background intro file not found: resources/tunnel/images/BgIntro.png");
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -74,7 +79,7 @@ public class IntroScreen extends JFrame {
                     g2d.setColor(new Color(0, 0, 0, 150));
                     g2d.fillRect(0, 0, getWidth(), getHeight());
                 } else {
-                    // Fallback Gradient
+                    // Fallback Gradient jika gambar tidak ditemukan
                     GradientPaint gp = new GradientPaint(
                             0, 0, new Color(15, 20, 35),
                             getWidth(), getHeight(), new Color(25, 40, 60)
@@ -100,7 +105,7 @@ public class IntroScreen extends JFrame {
                 // Drop Shadow
                 g2d.setColor(new Color(0, 0, 0, 200));
                 g2d.drawString("TUNNEL ESCAPE", 8, 73);
-                // tunnel.Main Text handled by super
+                // Main Text handled by super
                 super.paint(g, c);
             }
         });
@@ -115,8 +120,9 @@ public class IntroScreen extends JFrame {
             protected void paintComponent(Graphics g) {
                 Graphics2D g2d = (Graphics2D) g;
                 g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                // Darker glass for better contrast
-                g2d.setColor(new Color(20, 15, 10, 220));
+
+                // black
+                g2d.setColor(new Color(0, 0, 0, 240));
                 g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 30, 30);
                 // Gold Border
                 g2d.setColor(new Color(255, 215, 0, 150));
@@ -132,12 +138,12 @@ public class IntroScreen extends JFrame {
         // Gunakan Font yang aman untuk Emoji
         String fontStyle = "font-family: 'Segoe UI Emoji', 'Segoe UI', sans-serif;";
 
-        String descText = "<html><div style='text-align: center; " + fontStyle + " color: white;'>" +
+        String descText = "<html><div style='text-align: center; " + fontStyle + " color: #FFFFFF;'>" +
                 "<h2 style='color: #FFD700; margin-bottom: 15px; font-size: 18px;'>⚡ MISSION PROTOCOL ⚡</h2>" +
                 "<p style='font-size: 14px; line-height: 1.6; margin-bottom: 10px;'>" +
-                "🏃‍♂️ <b>Goal:</b> Reach <span style='color: #4db8ff;'>Node 64</span> to escape the dark tunnel.<br>" +
-                "🍖 <b>Survival:</b> Roll dice to collect food & energy to move forward.<br>" +
-                "⚠️ <b>Danger:</b> Watch out for the <span style='color: #ff6b6b;'>RED DICE</span>! <br>" +
+                "🏃‍♂️ <b style='color: #FFFFFF;'>Goal:</b> Reach <span style='color: #4db8ff;'>Node 64</span> to escape the dark tunnel.<br>" +
+                "🍖 <b style='color: #FFFFFF;'>Survival:</b> Roll dice to collect food & energy to move forward.<br>" +
+                "⚠️ <b style='color: #FFFFFF;'>Danger:</b> Watch out for the <span style='color: #ff6b6b;'>RED DICE</span>! <br>" +
                 "The wind will blow you backwards!</p>" +
                 "</div></html>";
 

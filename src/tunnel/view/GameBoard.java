@@ -55,6 +55,9 @@ public class GameBoard extends JFrame {
     // FONT KHUSUS AGAR EMOJI KEDETECT DI WINDOWS
     private static final Font EMOJI_FONT = new Font("Segoe UI Emoji", Font.BOLD, 14);
 
+    // WARNA EMAS YANG KONSISTEN
+    private static final Color GOLD_COLOR = new Color(255, 215, 0);
+
     public GameBoard(GameController gameController) {
         this.gameController = gameController;
         this.loadedImages = new HashMap<>();
@@ -478,7 +481,6 @@ public class GameBoard extends JFrame {
         animationTimer.start();
     }
 
-    // --- REVISI DI SINI (POP-UP TEXT & VISUAL) ---
     private void endTurn(GameController.TurnResult result) {
         animatingPlayer = null;
         animationPath = null;
@@ -506,7 +508,6 @@ public class GameBoard extends JFrame {
             if (result.isBonusTurn()) {
                 soundManager.play("bonus");
 
-                // FIX: Teks bahasa Inggris yang lebih baik
                 JOptionPane.showMessageDialog(this,
                         "✨ LUCKY SPOT! ✨\n" +
                                 "You found a Lunch Box! 🍱\n" +
@@ -516,7 +517,7 @@ public class GameBoard extends JFrame {
         }
     }
 
-    // --- REVISI DI SINI (LEADERBOARD PREMIUM & EMOJI FIX) ---
+    // --- PERBAIKAN VISIBILITAS LEADERBOARD DI SINI ---
     private void showLeaderboardDialog() {
         JDialog dialog = new JDialog(this, "GAME OVER - RESULTS", true);
         dialog.setSize(600, 650);
@@ -527,17 +528,17 @@ public class GameBoard extends JFrame {
         JPanel headerPanel = new JPanel();
         headerPanel.setBackground(new Color(25, 20, 15));
         JLabel header = new JLabel("🏆 CONGRATULATIONS! 🏆", SwingConstants.CENTER);
-        header.setFont(EMOJI_FONT.deriveFont(28f)); // Pakai EMOJI_FONT
-        header.setForeground(new Color(255, 215, 0)); // Gold
+        header.setFont(EMOJI_FONT.deriveFont(28f));
+        header.setForeground(GOLD_COLOR); // Emas
         headerPanel.setBorder(new EmptyBorder(15, 0, 15, 0));
         headerPanel.add(header);
         dialog.add(headerPanel, BorderLayout.NORTH);
 
-        // Tabbed Pane Styling
+        // Tabbed Pane Styling - PERBAIKAN WARNA TAB
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        tabbedPane.setBackground(new Color(50, 45, 40));
-        tabbedPane.setForeground(Color.BLACK);
+        tabbedPane.setBackground(new Color(50, 45, 40)); // Warna background tab yang tidak dipilih
+        tabbedPane.setForeground(Color.WHITE); // Warna TEKS tab (agar terlihat saat tidak dipilih)
 
         // --- TAB 1: CURRENT MATCH ---
         JPanel rankingPanel = new JPanel();
@@ -545,9 +546,10 @@ public class GameBoard extends JFrame {
         rankingPanel.setBackground(new Color(40, 35, 30));
         rankingPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
 
+        // PERBAIKAN WARNA SUB-JUDUL JADI PUTIH/TERANG
         JLabel subTitle = new JLabel("📊 RANKING BASED ON POINTS");
         subTitle.setFont(EMOJI_FONT);
-        subTitle.setForeground(new Color(135, 206, 250));
+        subTitle.setForeground(Color.WHITE); // Diubah jadi Putih agar kontras
         subTitle.setAlignmentX(CENTER_ALIGNMENT);
         rankingPanel.add(subTitle);
         rankingPanel.add(Box.createRigidArea(new Dimension(0, 15)));
@@ -572,8 +574,9 @@ public class GameBoard extends JFrame {
         hallOfFamePanel.setBackground(new Color(30, 25, 35));
         hallOfFamePanel.setBorder(new EmptyBorder(20, 20, 20, 20));
 
+        // PERBAIKAN WARNA SUB-JUDUL JADI EMAS TERANG
         JLabel winTitle = new JLabel("👑 TOP WINNERS (All Time)");
-        winTitle.setForeground(Color.ORANGE);
+        winTitle.setForeground(GOLD_COLOR); // Diubah jadi Emas Terang
         winTitle.setFont(EMOJI_FONT);
         winTitle.setAlignmentX(CENTER_ALIGNMENT);
         hallOfFamePanel.add(winTitle);
@@ -590,8 +593,9 @@ public class GameBoard extends JFrame {
 
         hallOfFamePanel.add(Box.createRigidArea(new Dimension(0, 20)));
 
+        // PERBAIKAN WARNA SUB-JUDUL JADI EMAS TERANG
         JLabel scoreTitle = new JLabel("🔥 LEGENDARY HIGH SCORES");
-        scoreTitle.setForeground(Color.MAGENTA);
+        scoreTitle.setForeground(GOLD_COLOR); // Diubah jadi Emas Terang
         scoreTitle.setFont(EMOJI_FONT);
         scoreTitle.setAlignmentX(CENTER_ALIGNMENT);
         hallOfFamePanel.add(scoreTitle);
@@ -633,22 +637,19 @@ public class GameBoard extends JFrame {
         JPanel row = new JPanel(new BorderLayout());
         row.setMaximumSize(new Dimension(500, 45));
 
-        // Warna Background Baris (Dark Grey)
         row.setBackground(new Color(60, 55, 50));
 
-        // Border berwarna sesuai Rank
         Color borderColor = Color.DARK_GRAY;
         String iconStr = "⭐ ";
-        if (rank == 1) { borderColor = new Color(255, 215, 0); iconStr = "🥇 "; } // Emas
-        else if (rank == 2) { borderColor = new Color(192, 192, 192); iconStr = "🥈 "; } // Perak
-        else if (rank == 3) { borderColor = new Color(205, 127, 50); iconStr = "🥉 "; } // Perunggu
+        if (rank == 1) { borderColor = GOLD_COLOR; iconStr = "🥇 "; }
+        else if (rank == 2) { borderColor = new Color(192, 192, 192); iconStr = "🥈 "; }
+        else if (rank == 3) { borderColor = new Color(205, 127, 50); iconStr = "🥉 "; }
 
         row.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createMatteBorder(0, 5, 0, 0, borderColor),
                 new EmptyBorder(5, 10, 5, 10)
         ));
 
-        // FIX: Pakai EMOJI_FONT di sini
         String rankStr = (rank > 0) ? iconStr : "👤 ";
         JLabel nameLbl = new JLabel(rankStr + name);
         nameLbl.setForeground(Color.WHITE);
@@ -656,7 +657,7 @@ public class GameBoard extends JFrame {
 
         String suffix = isScore ? " Coins" : " Wins";
         JLabel valLbl = new JLabel(value + suffix);
-        valLbl.setForeground(new Color(255, 223, 0)); // Gold text
+        valLbl.setForeground(GOLD_COLOR);
         valLbl.setFont(new Font("Monospaced", Font.BOLD, 14));
 
         row.add(nameLbl, BorderLayout.WEST);
