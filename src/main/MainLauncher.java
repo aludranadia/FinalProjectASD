@@ -28,14 +28,12 @@ public class MainLauncher extends JFrame {
         gbc.gridx = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        // --- JUDUL ---
         JLabel titleLabel = new JLabel("PILIH GAME", SwingConstants.CENTER);
         titleLabel.setFont(new Font("Impact", Font.BOLD, 42));
         titleLabel.setForeground(new Color(236, 240, 241));
         gbc.gridy = 0;
         add(titleLabel, gbc);
 
-        // --- TOMBOL GAME 1: TUNNEL ESCAPE ---
         JButton btnTunnel = createStyledButton("Tunnel Escape", new Color(230, 126, 34));
         btnTunnel.addActionListener(e -> {
             soundManager.playClick();
@@ -44,7 +42,6 @@ public class MainLauncher extends JFrame {
         gbc.gridy = 1;
         add(btnTunnel, gbc);
 
-        // --- TOMBOL GAME 2: MAZE SOLVER ---
         JButton btnMaze = createStyledButton("Maze Graph Solver", new Color(52, 152, 219));
         btnMaze.addActionListener(e -> {
             soundManager.playClick();
@@ -53,7 +50,6 @@ public class MainLauncher extends JFrame {
         gbc.gridy = 2;
         add(btnMaze, gbc);
 
-        // --- TOMBOL KELUAR ---
         JButton btnExit = createStyledButton("Keluar", new Color(192, 57, 43));
         btnExit.addActionListener(e -> {
             soundManager.playClick();
@@ -67,7 +63,6 @@ public class MainLauncher extends JFrame {
         add(btnExit, gbc);
     }
 
-    // --- LOGIKA MEMBUKA GAME TUNNEL ---
     private void launchTunnelGame() {
         soundManager.stopBGM();
         this.dispose();
@@ -77,7 +72,6 @@ public class MainLauncher extends JFrame {
         });
     }
 
-    // --- LOGIKA MEMBUKA GAME MAZE ---
     private void launchMazeGame() {
         soundManager.stopBGM();
         this.dispose();

@@ -27,7 +27,6 @@ public class IntroScreenMaze extends JFrame {
         loadBackground();
         initComponents();
 
-        // Listener standar untuk mematikan suara jika user klik tombol X (Exit)
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
@@ -72,8 +71,6 @@ public class IntroScreenMaze extends JFrame {
         JLabel titleLabel = new JLabel("THE MAZE");
         titleLabel.setFont(new Font("Impact", Font.BOLD, 90));
         titleLabel.setForeground(new Color(255, 215, 0));
-        // ... (Kode styling title sama seperti sebelumnya) ...
-        // Agar kode tidak terlalu panjang, saya skip bagian styling label yang tidak berubah
 
         gbc.gridx = 0; gbc.gridy = 0;
         gbc.insets = new Insets(0, 0, 10, 0);
@@ -98,17 +95,10 @@ public class IntroScreenMaze extends JFrame {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 0));
         buttonPanel.setOpaque(false);
 
-        // --- LOGIKA TOMBOL BACK YANG DIPERBAIKI ---
         JButton backBtn = createStyledButton("BACK TO MENU", new Color(192, 57, 43), Color.WHITE);
         backBtn.addActionListener(e -> {
-            // 1. Matikan musik secara eksplisit
             soundManager.stopAll();
-
-            // 2. Tutup jendela ini
             this.dispose();
-
-            // 3. Gunakan invokeLater untuk membuka MainLauncher
-            // Ini menjamin MainLauncher dibuka SETELAH event loop menyelesaikan dispose()
             SwingUtilities.invokeLater(() -> {
                 new MainLauncher().setVisible(true);
             });
@@ -118,7 +108,7 @@ public class IntroScreenMaze extends JFrame {
         startBtn.setPreferredSize(new Dimension(250, 55));
         startBtn.setFont(new Font("Segoe UI", Font.BOLD, 20));
         startBtn.addActionListener(e -> {
-            soundManager.stopAll(); // Stop intro music
+            soundManager.stopAll();
             this.dispose();
             openGameWindow();
         });
@@ -164,14 +154,10 @@ public class IntroScreenMaze extends JFrame {
         MazePanel mazePanel = new MazePanel();
         gameFrame.add(mazePanel);
 
-        // Listener ini akan menangani kembalinya ke Menu Utama saat Game Window ditutup
-        // (Baik lewat tombol Back di dalam game maupun tombol X)
         gameFrame.addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
             public void windowClosed(java.awt.event.WindowEvent windowEvent) {
-                mazePanel.stopMusic(); // Pastikan musik game mati
-
-                // Gunakan invokeLater untuk membuka Main Menu dengan aman
+                mazePanel.stopMusic();
                 SwingUtilities.invokeLater(() -> {
                     new MainLauncher().setVisible(true);
                 });

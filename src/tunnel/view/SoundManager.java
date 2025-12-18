@@ -10,8 +10,6 @@ public class SoundManager {
     private Map<String, Clip> soundMap;
     private Random random;
 
-    // KONFIGURASI VOLUME
-    // BGM agak pelan, SFX normal (0.0f = Volume Penuh)
     private static final float BGM_VOLUME = -15.0f;
     private static final float SFX_VOLUME = 0.0f;
 
@@ -19,7 +17,6 @@ public class SoundManager {
         soundMap = new HashMap<>();
         random = new Random();
 
-        // Load Sounds - Tunnel Resources
         loadSound("intro_bgm", "resources/tunnel/sounds/intro_bgm.wav");
         loadSound("game_bgm", "resources/tunnel/sounds/game_bgm.wav");
         loadSound("step", "resources/tunnel/sounds/step.wav");
@@ -31,8 +28,6 @@ public class SoundManager {
         loadSound("point_minus", "resources/tunnel/sounds/error.wav");
         loadSound("roll", "resources/tunnel/sounds/dice_roll.wav");
 
-        // Load Sounds - Maze Resources (Button Click)
-        // SESUAI REQUEST: Path button click
         loadSound("click", "resources/maze/sounds/button_click.wav");
     }
 
@@ -101,7 +96,6 @@ public class SoundManager {
                 gainControl.setValue(decibels);
             }
         } catch (Exception e) {
-            // Ignore volume error
         }
     }
 }

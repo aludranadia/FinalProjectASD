@@ -4,7 +4,6 @@ public class Node {
     private int number;
     private int row;
     private int col;
-    // Tambahan: Nilai Koin
     private int coinValue; // Positif (+) = Bonus, Negatif (-) = Dicuri
 
     public Node(int number, int row, int col) {

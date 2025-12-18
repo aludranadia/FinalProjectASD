@@ -320,7 +320,7 @@ public class IntroScreen extends JFrame {
         footer.setBackground(new Color(30, 25, 20));
         footer.setBorder(new EmptyBorder(20, 0, 20, 0));
 
-        // BACK BUTTON (Use helper)
+        // BACK BUTTON
         JButton backBtn = createStyledButton("BACK", Color.GRAY, Color.WHITE);
         backBtn.setFont(new Font("Segoe UI", Font.BOLD, 18));
         backBtn.setPreferredSize(new Dimension(120, 50));
@@ -330,7 +330,7 @@ public class IntroScreen extends JFrame {
             showPlayerCountDialog();
         });
 
-        // START BUTTON (Use helper)
+        // START BUTTON
         JButton startBtn = createStyledButton("START ADVENTURE!", new Color(46, 204, 113), Color.WHITE);
         startBtn.setFont(new Font("Segoe UI", Font.BOLD, 18));
         startBtn.setPreferredSize(new Dimension(250, 50));

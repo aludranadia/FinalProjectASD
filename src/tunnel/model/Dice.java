@@ -11,19 +11,16 @@ public class Dice {
         this.random = new Random();
     }
 
-    // Roll dadu dan tentukan warna berdasarkan probabilitas
     public DiceResult roll() {
-        // Generate angka 1-6
         lastNumber = random.nextInt(6) + 1;
 
-        // Generate warna berdasarkan probabilitas (70% hijau, 30% merah)
+        // 70% hijau, 30% merah
         double probability = random.nextDouble();
         lastColor = (probability <= 0.7) ? "GREEN" : "RED";
 
         return new DiceResult(lastNumber, lastColor);
     }
 
-    // Getters
     public int getLastNumber() { return lastNumber; }
     public String getLastColor() { return lastColor; }
 

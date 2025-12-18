@@ -11,7 +11,6 @@ public class Food {
 
     public static Food getFoodByDiceNumber(int diceNumber) {
         switch (diceNumber) {
-            // Menggunakan emoji yang lebih standard/lama agar terbaca di semua Windows
             case 1: return new Food("🍬 Permen", 1);
             case 2: return new Food("🍜 Mie", 2);
             case 3: return new Food("🍞 Roti", 3);

@@ -28,11 +28,9 @@ public class Graph {
             for (int col = 0; col < 8; col++) {
                 nodes[nodeNumber - 1] = new Node(nodeNumber, row, col);
 
-                // --- GENERATE KOIN ---
                 // Node 1 (Start) dan 64 (Finish) tidak ada koin
                 if (nodeNumber != 1 && nodeNumber != 64) {
                     int val = 0;
-                    // Pastikan nilai tidak 0 (harus ada efek plus atau minus)
                     while (val == 0) {
                         // Random antara -5 sampai +10
                         val = random.nextInt(16) - 5;
@@ -45,7 +43,6 @@ public class Graph {
         }
     }
 
-    // --- METHOD LAIN TETAP SAMA ---
     private void initializeAdjacencyMatrix() {
         for (int i = 0; i < SIZE; i++) for (int j = 0; j < SIZE; j++) adjacencyMatrix[i][j] = 0;
         for (int i = 0; i < SIZE - 1; i++) { adjacencyMatrix[i][i + 1] = 1; adjacencyMatrix[i + 1][i] = 1; }

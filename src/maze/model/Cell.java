@@ -8,10 +8,9 @@ public class Cell implements Comparable<Cell> {
     private final int col;
     private CellType type;
 
-    // Graph representation: Adjacency List (Tetangga)
+    // Adjacency List (Tetangga)
     private List<Cell> neighbors;
 
-    // Variabel bantu untuk algoritma (visited, parent, distance)
     private boolean visited;
     private List<Cell> parents;
     private double distance; // g-score (biaya dari start ke node ini)
@@ -20,7 +19,7 @@ public class Cell implements Comparable<Cell> {
     public Cell(int row, int col) {
         this.row = row;
         this.col = col;
-        this.type = CellType.WALL; // Default semua tembok dulu sebelum digenerate
+        this.type = CellType.WALL;
         this.neighbors = new ArrayList<>();
         this.parents = new ArrayList<>();
         resetAlgorithmData();
@@ -39,7 +38,6 @@ public class Cell implements Comparable<Cell> {
         this.fScore = Double.MAX_VALUE;
     }
 
-    // --- Getters & Setters ---
     public int getRow() { return row; }
     public int getCol() { return col; }
     public CellType getType() { return type; }
@@ -67,7 +65,6 @@ public class Cell implements Comparable<Cell> {
 
     @Override
     public int compareTo(Cell other) {
-        // PriorityQueue akan mengurutkan berdasarkan fScore (untuk A*) atau distance (Dijkstra)
         return Double.compare(this.fScore, other.fScore);
     }
 

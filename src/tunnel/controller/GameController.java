@@ -30,7 +30,7 @@ public class GameController {
         this.currentPlayer = null;
         this.gameStarted = false;
         this.gameEnded = false;
-        this.graph = new Graph(); // Reset graph agar posisi koin dan shortcut berubah
+        this.graph = new Graph();
     }
 
     public void initializeCustomPlayers(List<String> names, List<String> imagePaths) {
@@ -107,10 +107,8 @@ public class GameController {
 
         if (currentPlayer.hasWon()) {
             gameEnded = true;
-            // BONUS BESAR untuk yang mencapai finish duluan (misal +50 poin)
-            // agar pemain yang finish punya peluang besar jadi juara 1 di PriorityQueue
             currentPlayer.addCoins(50);
-            updateGlobalStats(currentPlayer); // Update Map Statistik
+            updateGlobalStats(currentPlayer);
         }
 
         boolean bonusTurn = false;
@@ -173,7 +171,6 @@ public class GameController {
         currentPlayer = playerQueue.peek();
     }
 
-    // Getters standard
     public Graph getGraph() { return graph; }
     public Player getCurrentPlayer() { return currentPlayer; }
     public Queue<Player> getPlayerQueue() { return playerQueue; }
@@ -201,7 +198,6 @@ public class GameController {
             this.bonusTurn = bonusTurn;
             this.coinEffect = coinEffect;
         }
-        // Getters
         public Player getPlayer() { return player; }
         public Dice.DiceResult getDiceResult() { return diceResult; }
         public Food getFood() { return food; }

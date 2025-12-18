@@ -8,7 +8,6 @@ import java.util.Map;
 
 public class SoundManagerMaze {
     private Map<String, Clip> soundMap;
-    // Clip khusus untuk BGM agar mudah dikontrol secara spesifik
     private Clip currentBGM;
 
     private static final float BGM_VOLUME = -10.0f;
@@ -40,11 +39,11 @@ public class SoundManagerMaze {
     }
 
     public void playBGM(String name) {
-        stopAll(); // Pastikan tidak ada BGM lain yang jalan
+        stopAll();
 
         Clip clip = soundMap.get(name);
         if (clip != null) {
-            currentBGM = clip; // Simpan referensi BGM yang sedang aktif
+            currentBGM = clip;
             setVolume(clip, BGM_VOLUME);
             clip.setFramePosition(0);
             clip.loop(Clip.LOOP_CONTINUOUSLY);
@@ -65,18 +64,16 @@ public class SoundManagerMaze {
     }
 
     public void stopAll() {
-        // Stop spesifik BGM jika ada
         if (currentBGM != null) {
             if (currentBGM.isRunning()) currentBGM.stop();
             currentBGM.setFramePosition(0);
             currentBGM = null;
         }
 
-        // Stop semua clip lain (SFX) di map untuk keamanan
         for (Clip clip : soundMap.values()) {
             if (clip != null) {
                 if (clip.isRunning()) clip.stop();
-                clip.setFramePosition(0); // Reset posisi agar siap diputar ulang
+                clip.setFramePosition(0);
             }
         }
     }

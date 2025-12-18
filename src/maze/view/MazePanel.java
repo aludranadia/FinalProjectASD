@@ -38,7 +38,6 @@ public class MazePanel extends JPanel {
     private SoundManagerMaze soundManager;
     private JPanel controlPanel;
 
-    // Variabel untuk HUD Info
     private String lastAlgorithm = "-";
     private String statusText = "Ready";
     private double totalPathCost = 0;
@@ -178,7 +177,6 @@ public class MazePanel extends JPanel {
                             animationIndex = 0;
                             allSolutionPaths = paths;
 
-                            // Update Status saat pathing dimulai
                             statusText = "Found Path!";
                             totalPathCost = finalCost;
                             break;
@@ -187,7 +185,7 @@ public class MazePanel extends JPanel {
                 } else if (isPathing) {
                     ((Timer)e.getSource()).stop();
                     soundManager.playSFX("success");
-                    isFinished = true; // Tandai selesai
+                    isFinished = true;
                 }
                 repaint();
             });
@@ -221,14 +219,14 @@ public class MazePanel extends JPanel {
 
         Cell[][] grid = mazeGraph.getGrid();
 
-        // 1. GRID
+        // GRID
         for (int r = 0; r < rows; r++) {
             for (int c = 0; c < cols; c++) {
                 drawCustomCell(g2, grid[r][c], startX + (c * cellSize), startY + (r * cellSize), cellSize);
             }
         }
 
-        // 2. ANIMASI VISITED
+        // ANIMASI VISITED
         g2.setColor(new Color(150, 150, 150, 120));
         for (Cell cell : visitedAnimation) {
             if (cell.getType() != CellType.WALL) {
@@ -238,7 +236,7 @@ public class MazePanel extends JPanel {
             }
         }
 
-        // 3. JALUR (MULTIPLE PATHS)
+        // JALUR (MULTIPLE PATHS)
         if (isPathing && allSolutionPaths != null && !allSolutionPaths.isEmpty()) {
             int colorIndex = 0;
             for (List<Cell> path : allSolutionPaths) {
@@ -249,11 +247,10 @@ public class MazePanel extends JPanel {
             }
         }
 
-        // 4. MARKER
+        // MARKER
         drawStyledMarker(g2, mazeGraph.getStart(), new Color(46, 204, 113), "S", startX, startY, cellSize);
         drawStyledMarker(g2, mazeGraph.getEnd(), new Color(155, 89, 182), "E", startX, startY, cellSize);
 
-        // 5. DRAW HUD (INFO COST)
         drawStatusHUD(g2, panelW);
     }
 

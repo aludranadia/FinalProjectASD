@@ -52,7 +52,6 @@ public class GameBoard extends JFrame {
     private String currentDiceColor = "WHITE";
     private boolean isRolling = false;
 
-    // FONT KHUSUS AGAR EMOJI TERBACA
     private static final Font UI_FONT = new Font("Segoe UI", Font.BOLD, 14);
     private static final Font EMOJI_FONT = new Font("Segoe UI Emoji", Font.PLAIN, 12);
     private static final Color GOLD_COLOR = new Color(255, 215, 0);
@@ -149,20 +148,15 @@ public class GameBoard extends JFrame {
         dicePanel.setMaximumSize(new Dimension(250, 120));
         dicePanel.setOpaque(false);
 
-        // --- UPDATE TOMBOL & SOUND LOGIC ---
-
-        // 1. ROLL DICE: Tidak ada sound click disini (karena nanti ada sound kocok dadu)
         rollDiceButton = createStyledButton("ROLL DICE", new Color(230, 126, 34), Color.BLACK);
         rollDiceButton.addActionListener(e -> handleRoll());
 
-        // 2. NEW GAME: Tambahkan sound click manual
         newGameButton = createStyledButton("NEW GAME", new Color(52, 152, 219), Color.WHITE);
         newGameButton.addActionListener(e -> {
             soundManager.playClick();
             handleNewGame();
         });
 
-        // 3. MENU: Tambahkan sound click manual
         backButton = createStyledButton("MENU", new Color(192, 57, 43), Color.WHITE);
         backButton.addActionListener(e -> {
             soundManager.playClick();
@@ -176,7 +170,6 @@ public class GameBoard extends JFrame {
         gameLogArea.setBackground(new Color(40, 30, 20));
         gameLogArea.setForeground(new Color(200, 255, 200));
 
-        // PENTING: Gunakan Font Emoji agar 🍬🍜 terbaca
         gameLogArea.setFont(EMOJI_FONT);
 
         JScrollPane scrollLog = new JScrollPane(gameLogArea);
@@ -207,7 +200,6 @@ public class GameBoard extends JFrame {
         return panel;
     }
 
-    // MODIFIKASI: Menghapus listener sound otomatis agar Roll Dice tidak double sound/bisa dicustom
     private JButton createStyledButton(String text, Color bg, Color fg) {
         JButton btn = new JButton(text);
         btn.setFont(new Font("Segoe UI", Font.BOLD, 20));
@@ -219,7 +211,6 @@ public class GameBoard extends JFrame {
         btn.setAlignmentX(CENTER_ALIGNMENT);
         btn.setMaximumSize(new Dimension(250, 50));
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        // Listener click sound dihapus dari sini, dipindah manual ke masing-masing tombol
         return btn;
     }
 
@@ -441,7 +432,6 @@ public class GameBoard extends JFrame {
         String act = currentDiceColor.equals("GREEN") ? "MAJU" : "MUNDUR";
         String foodName = (result.getFood() != null) ? result.getFood().getName() :("-");
 
-        // PERBAIKAN: JANGAN PAKE REPLACE ALL AGAR EMOJI MUNCUL
         gameLogArea.append(result.getPlayer().getName() + ": " + act + " " + result.getStepsMoved() + " -> " + foodName + "\n");
         gameLogArea.setCaretPosition(gameLogArea.getDocument().getLength());
 
@@ -674,7 +664,6 @@ public class GameBoard extends JFrame {
                 });
         tabbedPane.addTab(" Hall of Fame ", createDarkScrollPane(hofPanel));
 
-        // WARNAI TAB
         for (int i = 0; i < tabbedPane.getTabCount(); i++) {
             tabbedPane.setBackgroundAt(i, new Color(60, 50, 40));
             tabbedPane.setForegroundAt(i, Color.WHITE);
@@ -687,19 +676,16 @@ public class GameBoard extends JFrame {
         footerPanel.setBackground(new Color(20, 15, 10)); // Samakan dengan mainPanel
         footerPanel.setBorder(new EmptyBorder(15, 0, 20, 0));
 
-        // --- FIX TOMBOL CLOSE & RESET YANG TIDAK TERLIHAT ---
         JButton closeBtn = new JButton("CLOSE & RESET");
         closeBtn.setPreferredSize(new Dimension(200, 50));
         closeBtn.setFont(new Font("Segoe UI", Font.BOLD, 16));
 
-        // Warna Background dan Text
         closeBtn.setBackground(new Color(52, 152, 219)); // Biru Terang
         closeBtn.setForeground(Color.WHITE);             // Teks Putih
 
-        // WAJIB DITAMBAHKAN agar warna background tidak tertimpa oleh default system (putih)
         closeBtn.setOpaque(true);
         closeBtn.setContentAreaFilled(true);
-        closeBtn.setBorderPainted(false); // Style Flat agar lebih bersih
+        closeBtn.setBorderPainted(false);
         closeBtn.setFocusPainted(false);
 
         closeBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));

@@ -23,7 +23,7 @@ public class MazeSolver {
         public double getTotalCost() { return totalCost; }
     }
 
-    // --- 1. BFS ---
+    // BFS
     public SolverResult solveBFS(MazeGraph graph) {
         graph.resetGraphState();
         Cell start = graph.getStart();
@@ -59,7 +59,7 @@ public class MazeSolver {
         return new SolverResult(visitedOrder, paths, cost);
     }
 
-    // --- 2. DFS ---
+    // DFS
     public SolverResult solveDFS(MazeGraph graph) {
         graph.resetGraphState();
         Cell start = graph.getStart();
@@ -95,17 +95,17 @@ public class MazeSolver {
         return new SolverResult(visitedOrder, paths, cost);
     }
 
-    // --- 3. DIJKSTRA ---
+    // DIJKSTRA
     public SolverResult solveDijkstra(MazeGraph graph) {
         return solveWeighted(graph, false);
     }
 
-    // --- 4. A* STAR ---
+    // A* STAR
     public SolverResult solveAStar(MazeGraph graph) {
         return solveWeighted(graph, true);
     }
 
-    // --- 5. PRIM'S ---
+    // PRIM'S
     public SolverResult solvePrim(MazeGraph graph) {
         graph.resetGraphState();
         Cell start = graph.getStart();
@@ -156,7 +156,7 @@ public class MazeSolver {
         return new SolverResult(visitedOrder, paths, cost);
     }
 
-    // --- 6. KRUSKAL ---
+    // KRUSKAL
     public SolverResult solveKruskal(MazeGraph graph) {
         graph.resetGraphState();
         Cell start = graph.getStart();
@@ -241,7 +241,6 @@ public class MazeSolver {
         return root;
     }
 
-    // --- SHARED WEIGHTED LOGIC (Dijkstra/A*) ---
     private SolverResult solveWeighted(MazeGraph graph, boolean useHeuristic) {
         graph.resetGraphState();
         Cell start = graph.getStart();
@@ -256,17 +255,12 @@ public class MazeSolver {
         while (!pq.isEmpty()) {
             Cell current = pq.poll();
 
-            // LOGIKA PENTING: Untuk multiple paths, kita perbolehkan revisit
-            // jika cost-nya sama, tapi untuk efisiensi PQ, kita skip jika sudah 'closed' dengan jarak lebih kecil.
-            // Namun implementasi simple di sini: tandai visited saat di-poll
             if (!current.isVisited()) {
                 current.setVisited(true);
                 visitedOrder.add(current);
             }
 
             if (current == end) {
-                // Jangan break jika ingin mencari semua kemungkinan parent ke End dengan cost sama
-                // Tapi kita break jika jarak current sudah > jarak end yang sudah ketemu (optimasi)
                 if (current.getDistance() > end.getDistance()) break;
             }
 
@@ -279,15 +273,13 @@ public class MazeSolver {
                 }
 
                 if (newDist < neighbor.getDistance()) {
-                    // Ditemukan jalur baru yang LEBIH BAIK
                     neighbor.setDistance(newDist);
                     neighbor.setFScore(newDist + heuristic);
-                    neighbor.setParent(current); // Reset parent list menjadi 1
+                    neighbor.setParent(current);
                     pq.add(neighbor);
                 }
                 else if (newDist == neighbor.getDistance()) {
-                    // Ditemukan jalur ALTERNATIF dengan COST SAMA (Multiple Paths)
-                    neighbor.addParent(current); // Tambahkan ke list parent
+                    neighbor.addParent(current);
                 }
             }
         }
@@ -296,13 +288,11 @@ public class MazeSolver {
         double cost = 0;
         if (end.getDistance() != Double.MAX_VALUE) {
             cost = end.getDistance();
-            // Rekonstruksi semua jalur (Multiple Paths)
             reconstructAllPathsRecursive(end, new ArrayList<>(), allPaths);
         }
         return new SolverResult(visitedOrder, allPaths, cost);
     }
 
-    // Digunakan untuk BFS, DFS, Prim, Kruskal (Single Path)
     private List<Cell> reconstructSinglePath(Cell end) {
         List<Cell> path = new ArrayList<>();
         Cell current = end;
@@ -318,11 +308,7 @@ public class MazeSolver {
         return path;
     }
 
-    // Digunakan untuk Dijkstra & A* (Multiple Paths)
     private void reconstructAllPathsRecursive(Cell current, List<Cell> currentPath, List<List<Cell>> allPaths) {
-        // --- SAFETY GUARD (PENTING!) ---
-        // Batasi jumlah jalur maksimal untuk mencegah OutOfMemoryError / Crash
-        // 50 jalur sudah cukup untuk visualisasi "warna-warni" tanpa membebani RAM
         if (allPaths.size() >= 50) return;
 
         if (currentPath.contains(current)) return; // Cegah Cycle
@@ -338,16 +324,13 @@ public class MazeSolver {
             if (parents.isEmpty()) return;
 
             for (Cell parent : parents) {
-                // Branching: copy currentPath untuk setiap cabang
                 reconstructAllPathsRecursive(parent, new ArrayList<>(currentPath), allPaths);
 
-                // Cek limit lagi setelah kembali dari rekursi
                 if (allPaths.size() >= 50) return;
             }
         }
     }
 
-    // Helper hitung cost manual untuk algoritma non-weighted (BFS/DFS/Prim/Kruskal)
     private double calculatePathCost(List<Cell> path) {
         double cost = 0;
         for (Cell cell : path) {

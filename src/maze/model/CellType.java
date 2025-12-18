@@ -9,7 +9,6 @@ public enum CellType {
     WATER(10, new Color(65, 105, 225)), // Cost 10
     WALL(Integer.MAX_VALUE, Color.BLACK); // Cost Tak Terhingga
 
-    // Field untuk menyimpan harga/cost dan warna
     private final int cost;
     private final Color color;
 
