@@ -8,12 +8,14 @@ import java.util.Map;
 
 public class SoundManagerMaze {
     private Map<String, Clip> soundMap;
-    private static final float BGM_VOLUME = -10.0f; // Volume dalam Decibel (negatif = lebih pelan)
+    // Clip khusus untuk BGM agar mudah dikontrol secara spesifik
+    private Clip currentBGM;
+
+    private static final float BGM_VOLUME = -10.0f;
     private static final float SFX_VOLUME = -5.0f;
 
     public SoundManagerMaze() {
         soundMap = new HashMap<>();
-        // Load semua suara di sini
         loadSound("intro", "resources/maze/sounds/maze_intro.wav");
         loadSound("game", "resources/maze/sounds/maze_game.wav");
         loadSound("click", "resources/maze/sounds/button_click.wav");
@@ -38,12 +40,14 @@ public class SoundManagerMaze {
     }
 
     public void playBGM(String name) {
-        stopAll(); // Stop musik lain sebelum main baru
+        stopAll(); // Pastikan tidak ada BGM lain yang jalan
+
         Clip clip = soundMap.get(name);
         if (clip != null) {
+            currentBGM = clip; // Simpan referensi BGM yang sedang aktif
             setVolume(clip, BGM_VOLUME);
             clip.setFramePosition(0);
-            clip.loop(Clip.LOOP_CONTINUOUSLY); // Loop selamanya
+            clip.loop(Clip.LOOP_CONTINUOUSLY);
             clip.start();
         }
     }
@@ -52,7 +56,7 @@ public class SoundManagerMaze {
         Clip clip = soundMap.get(name);
         if (clip != null) {
             if (clip.isRunning()) {
-                clip.stop(); // Stop kalau lagi jalan (biar bisa spam klik)
+                clip.stop();
             }
             setVolume(clip, SFX_VOLUME);
             clip.setFramePosition(0);
@@ -61,8 +65,19 @@ public class SoundManagerMaze {
     }
 
     public void stopAll() {
+        // Stop spesifik BGM jika ada
+        if (currentBGM != null) {
+            if (currentBGM.isRunning()) currentBGM.stop();
+            currentBGM.setFramePosition(0);
+            currentBGM = null;
+        }
+
+        // Stop semua clip lain (SFX) di map untuk keamanan
         for (Clip clip : soundMap.values()) {
-            if (clip.isRunning()) clip.stop();
+            if (clip != null) {
+                if (clip.isRunning()) clip.stop();
+                clip.setFramePosition(0); // Reset posisi agar siap diputar ulang
+            }
         }
     }
 
@@ -72,8 +87,6 @@ public class SoundManagerMaze {
                 FloatControl gain = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
                 gain.setValue(db);
             }
-        } catch (Exception e) {
-            // Ignore if volume control not supported
-        }
+        } catch (Exception ignored) {}
     }
 }

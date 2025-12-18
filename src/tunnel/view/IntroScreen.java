@@ -21,7 +21,6 @@ public class IntroScreen extends JFrame {
     private SoundManager soundManager;
     private BufferedImage backgroundImage;
 
-    // Daftar Avatar
     private final String[] AVATAR_PATHS = {
             "resources/tunnel/images/player 1.png", "resources/tunnel/images/player 2.png",
             "resources/tunnel/images/player 3.png", "resources/tunnel/images/player 4.png",
@@ -37,7 +36,6 @@ public class IntroScreen extends JFrame {
     public IntroScreen(GameController gameController) {
         this.gameController = gameController;
 
-        // 1. Init Sound (PENTING: Harus sebelum load komponen lain)
         this.soundManager = new SoundManager();
         this.soundManager.playLoop("intro_bgm");
 
@@ -45,7 +43,6 @@ public class IntroScreen extends JFrame {
         initComponents();
         startPulseAnimation();
 
-        // Matikan musik saat window ditutup
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosed(WindowEvent e) {
@@ -68,10 +65,8 @@ public class IntroScreen extends JFrame {
     private void initComponents() {
         setTitle("Tunnel Escape - The Journey");
 
-        // --- UKURAN DISAMAKAN DENGAN GAMEPLAY ---
         setSize(1150, 850);
         setResizable(false);
-        // ----------------------------------------
 
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
@@ -97,7 +92,6 @@ public class IntroScreen extends JFrame {
         mainPanel.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
 
-        // --- TITLE ---
         JLabel titleLabel = new JLabel("TUNNEL ESCAPE");
         titleLabel.setFont(new Font("Impact", Font.BOLD, 80));
         titleLabel.setForeground(new Color(255, 215, 0));
@@ -115,7 +109,6 @@ public class IntroScreen extends JFrame {
         gbc.insets = new Insets(10, 0, 20, 0);
         mainPanel.add(titleLabel, gbc);
 
-        // --- DESCRIPTION BOX ---
         JPanel glassPanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -151,19 +144,21 @@ public class IntroScreen extends JFrame {
         gbc.insets = new Insets(0, 20, 40, 20);
         mainPanel.add(glassPanel, gbc);
 
-        // --- BUTTONS ---
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 0));
         buttonPanel.setOpaque(false);
 
-        // START BUTTON (Use helper)
         JButton playButton = createStyledButton("START ADVENTURE", new Color(255, 215, 0), new Color(40, 20, 0));
         playButton.setPreferredSize(new Dimension(280, 60));
-        playButton.addActionListener(e -> showPlayerCountDialog());
+        playButton.addActionListener(e -> {
+            soundManager.playClick();
+            showPlayerCountDialog();
+        });
 
         // BACK BUTTON (Use helper)
         JButton backButton = createStyledButton("BACK TO MENU", new Color(192, 57, 43), Color.WHITE);
         backButton.setPreferredSize(new Dimension(200, 60));
         backButton.addActionListener(e -> {
+            soundManager.playClick();
             soundManager.stopAllBGM();
             this.dispose();
             new MainLauncher().setVisible(true);
@@ -179,7 +174,6 @@ public class IntroScreen extends JFrame {
         add(mainPanel);
     }
 
-    // --- HELPER UNTUK BUTTON DENGAN SUARA ---
     private JButton createStyledButton(String text, Color bg, Color fg) {
         JButton btn = new JButton(text);
         btn.setFont(new Font("Segoe UI", Font.BOLD, 20));
@@ -189,13 +183,6 @@ public class IntroScreen extends JFrame {
         btn.setBorderPainted(false);
         btn.setOpaque(true);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
-        // OTOMATIS TAMBAH SUARA KLIK
-        btn.addActionListener(e -> {
-            if (soundManager != null) {
-                soundManager.playClick();
-            }
-        });
 
         return btn;
     }
@@ -213,7 +200,6 @@ public class IntroScreen extends JFrame {
         }).start();
     }
 
-    // --- DIALOG 1: PILIH JUMLAH PEMAIN ---
     private void showPlayerCountDialog() {
         JDialog dialog = new JDialog(this, "Setup", true);
         dialog.setUndecorated(true);
@@ -245,14 +231,13 @@ public class IntroScreen extends JFrame {
         }
         spinner.setBorder(null);
 
-        // NEXT BUTTON (Use helper)
         JButton btn = createStyledButton("NEXT", new Color(230, 126, 34), new Color(40,20,0));
         btn.setFont(new Font("Segoe UI", Font.BOLD, 18));
         btn.setMaximumSize(new Dimension(200, 50));
         btn.setAlignmentX(CENTER_ALIGNMENT);
 
         btn.addActionListener(e -> {
-            // TIDAK PERLU PANGGIL playClick LAGI KARENA SUDAH ADA DI HELPER
+            soundManager.playClick();
             int count = (int) spinner.getValue();
             dialog.dispose();
             showPlayerDetailsDialog(count);
@@ -268,7 +253,6 @@ public class IntroScreen extends JFrame {
         dialog.setVisible(true);
     }
 
-    // --- DIALOG 2: CUSTOMIZE PLAYERS ---
     private void showPlayerDetailsDialog(int playerCount) {
         JDialog dialog = new JDialog(this, "Customize", true);
         dialog.setSize(600, 650);
@@ -341,6 +325,7 @@ public class IntroScreen extends JFrame {
         backBtn.setFont(new Font("Segoe UI", Font.BOLD, 18));
         backBtn.setPreferredSize(new Dimension(120, 50));
         backBtn.addActionListener(e -> {
+            soundManager.playClick();
             dialog.dispose();
             showPlayerCountDialog();
         });
@@ -350,6 +335,7 @@ public class IntroScreen extends JFrame {
         startBtn.setFont(new Font("Segoe UI", Font.BOLD, 18));
         startBtn.setPreferredSize(new Dimension(250, 50));
         startBtn.addActionListener(e -> {
+            soundManager.playClick();
             soundManager.stopAllBGM();
             List<String> names = new ArrayList<>();
             List<String> images = new ArrayList<>();

@@ -13,15 +13,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MazePanel extends JPanel {
-    // CELL_SIZE dihapus, kita hitung dinamis
 
     private static final Color[] PATH_COLORS = {
-            new Color(255, 50, 50),
-            new Color(0, 255, 255),
-            new Color(255, 255, 0),
-            new Color(255, 0, 255),
-            new Color(50, 255, 100),
-            new Color(255, 165, 0)
+            new Color(255, 50, 50),   // Merah Terang
+            new Color(0, 255, 255),   // Cyan
+            new Color(255, 255, 0),   // Kuning
+            new Color(255, 0, 255),   // Magenta
+            new Color(50, 255, 100),  // Hijau Neon
+            new Color(255, 165, 0)    // Oranye
     };
 
     private MazeGraph mazeGraph;
@@ -34,12 +33,15 @@ public class MazePanel extends JPanel {
     private Timer timer;
     private boolean isScanning = false;
     private boolean isPathing = false;
+    private boolean isFinished = false; // Flag status selesai
 
-    // SoundManager instance
     private SoundManagerMaze soundManager;
-
-    // Panel Kontrol dijadikan variabel class agar bisa diakses height-nya
     private JPanel controlPanel;
+
+    // Variabel untuk HUD Info
+    private String lastAlgorithm = "-";
+    private String statusText = "Ready";
+    private double totalPathCost = 0;
 
     public MazePanel() {
         this.setLayout(new BorderLayout());
@@ -47,9 +49,8 @@ public class MazePanel extends JPanel {
         this.solver = new MazeSolver();
 
         this.soundManager = new SoundManagerMaze();
-        this.soundManager.playBGM("game"); // Play Game BGM
+        this.soundManager.playBGM("game");
 
-        // Generate maze dengan ukuran agak besar karena layar full screen
         generateNewMaze(25, 45);
 
         controlPanel = createControlPanel();
@@ -64,10 +65,17 @@ public class MazePanel extends JPanel {
 
     private void generateNewMaze(int rows, int cols) {
         if (timer != null && timer.isRunning()) timer.stop();
+
         visitedAnimation = new ArrayList<>();
         allSolutionPaths = new ArrayList<>();
         isScanning = false;
         isPathing = false;
+        isFinished = false;
+
+        // Reset Info
+        statusText = "Ready";
+        totalPathCost = 0;
+        lastAlgorithm = "-";
 
         mazeGraph = new MazeGraph(rows, cols);
         mazeGraph.generateMaze();
@@ -99,14 +107,12 @@ public class MazePanel extends JPanel {
 
         JButton btnBack = createStyledButton("Back to Menu", new Color(192, 57, 43));
         btnBack.addActionListener(e -> {
+            soundManager.playSFX("click");
             stopMusic();
-
             Window window = SwingUtilities.getWindowAncestor(this);
             if (window != null) {
                 window.dispose();
             }
-
-            new MainLauncher().setVisible(true);
         });
 
         actionPanel.add(btnGen);
@@ -127,15 +133,23 @@ public class MazePanel extends JPanel {
 
     private void runSolver(String type) {
         soundManager.playSFX("click");
+
         if (timer != null && timer.isRunning()) return;
 
         visitedAnimation.clear();
         allSolutionPaths.clear();
         isScanning = true;
         isPathing = false;
+        isFinished = false;
         animationIndex = 0;
 
+        // Update Info Awal
+        lastAlgorithm = type;
+        statusText = "Scanning...";
+        totalPathCost = 0;
+
         MazeSolver.SolverResult result = null;
+
         switch (type) {
             case "BFS": result = solver.solveBFS(mazeGraph); break;
             case "DFS": result = solver.solveDFS(mazeGraph); break;
@@ -148,6 +162,7 @@ public class MazePanel extends JPanel {
         if (result != null) {
             final List<Cell> order = result.getVisitedOrder();
             final List<List<Cell>> paths = result.getPaths();
+            final double finalCost = result.getTotalCost(); // Ambil Cost
 
             soundManager.playSFX("scan");
 
@@ -162,12 +177,17 @@ public class MazePanel extends JPanel {
                             isPathing = true;
                             animationIndex = 0;
                             allSolutionPaths = paths;
+
+                            // Update Status saat pathing dimulai
+                            statusText = "Found Path!";
+                            totalPathCost = finalCost;
                             break;
                         }
                     }
                 } else if (isPathing) {
                     ((Timer)e.getSource()).stop();
                     soundManager.playSFX("success");
+                    isFinished = true; // Tandai selesai
                 }
                 repaint();
             });
@@ -175,7 +195,6 @@ public class MazePanel extends JPanel {
         }
     }
 
-    // --- LOGIKA RESPONSIF (FULL SCREEN) ADA DI SINI ---
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -184,51 +203,42 @@ public class MazePanel extends JPanel {
 
         if (mazeGraph == null) return;
 
-        // 1. Hitung area yang tersedia untuk menggambar maze
         int panelW = getWidth();
-        // Kurangi tinggi control panel agar maze tidak tertutup tombol di bawah
         int panelH = getHeight() - (controlPanel != null ? controlPanel.getHeight() : 100) - 20;
 
-        // 2. Hitung ukuran kotak (Cell Size) secara dinamis
         int rows = mazeGraph.getRows();
         int cols = mazeGraph.getCols();
 
-        // Pilih ukuran terkecil antara lebar/tinggi agar kotak tetap proporsional (persegi)
         int cellW = panelW / cols;
         int cellH = panelH / rows;
         int cellSize = Math.min(cellW, cellH);
-
-        // Batasi minimal 5 pixel agar tidak error saat window diminimize sangat kecil
         cellSize = Math.max(cellSize, 5);
 
-        // 3. Hitung posisi awal (Start X & Y) agar Maze selalu di tengah (Center)
         int totalMazeW = cols * cellSize;
         int totalMazeH = rows * cellSize;
         int startX = (panelW - totalMazeW) / 2;
-        int startY = (panelH - totalMazeH) / 2 + 10; // +10 padding atas
+        int startY = (panelH - totalMazeH) / 2 + 30; // Turun dikit buat HUD
 
         Cell[][] grid = mazeGraph.getGrid();
+
+        // 1. GRID
         for (int r = 0; r < rows; r++) {
             for (int c = 0; c < cols; c++) {
-                Cell cell = grid[r][c];
-                int x = startX + (c * cellSize);
-                int y = startY + (r * cellSize);
-                drawCustomCell(g2, cell, x, y, cellSize);
+                drawCustomCell(g2, grid[r][c], startX + (c * cellSize), startY + (r * cellSize), cellSize);
             }
         }
 
+        // 2. ANIMASI VISITED
         g2.setColor(new Color(150, 150, 150, 120));
         for (Cell cell : visitedAnimation) {
             if (cell.getType() != CellType.WALL) {
                 int x = startX + (cell.getCol() * cellSize);
                 int y = startY + (cell.getRow() * cellSize);
                 g2.fillRect(x, y, cellSize, cellSize);
-                g2.setColor(new Color(200, 200, 200, 50));
-                g2.drawRect(x, y, cellSize, cellSize);
-                g2.setColor(new Color(150, 150, 150, 120));
             }
         }
 
+        // 3. JALUR (MULTIPLE PATHS)
         if (isPathing && allSolutionPaths != null && !allSolutionPaths.isEmpty()) {
             int colorIndex = 0;
             for (List<Cell> path : allSolutionPaths) {
@@ -239,8 +249,44 @@ public class MazePanel extends JPanel {
             }
         }
 
+        // 4. MARKER
         drawStyledMarker(g2, mazeGraph.getStart(), new Color(46, 204, 113), "S", startX, startY, cellSize);
         drawStyledMarker(g2, mazeGraph.getEnd(), new Color(155, 89, 182), "E", startX, startY, cellSize);
+
+        // 5. DRAW HUD (INFO COST)
+        drawStatusHUD(g2, panelW);
+    }
+
+    private void drawStatusHUD(Graphics2D g2, int panelWidth) {
+        int hudHeight = 35;
+        // Background transparan
+        g2.setColor(new Color(0, 0, 0, 200));
+        g2.fillRect(0, 0, panelWidth, hudHeight);
+        // Garis pemisah bawah
+        g2.setColor(new Color(255, 255, 255, 50));
+        g2.drawLine(0, hudHeight, panelWidth, hudHeight);
+
+        g2.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        g2.setColor(Color.WHITE);
+
+        String textAlgo = "Algorithm: " + lastAlgorithm;
+        String textStatus = "Status: " + statusText;
+        String textCost = "Total Cost: " + (isFinished || isPathing ? String.format("%.0f", totalPathCost) : "-");
+
+        FontMetrics fm = g2.getFontMetrics();
+        int padding = 20;
+
+        // Kiri
+        g2.drawString(textAlgo, padding, 23);
+
+        // Tengah
+        int wStatus = fm.stringWidth(textStatus);
+        g2.drawString(textStatus, (panelWidth - wStatus) / 2, 23);
+
+        // Kanan (Warna Emas untuk Cost)
+        int wCost = fm.stringWidth(textCost);
+        g2.setColor(new Color(255, 215, 0));
+        g2.drawString(textCost, panelWidth - wCost - padding, 23);
     }
 
     private void drawCustomCell(Graphics2D g2, Cell cell, int x, int y, int cellSize) {
@@ -263,16 +309,16 @@ public class MazePanel extends JPanel {
     private void drawPathLine(Graphics2D g2, List<Cell> path, int startX, int startY, Color color, int cellSize) {
         Path2D polyline = new Path2D.Float();
         Cell first = path.get(0);
-        polyline.moveTo(startX + first.getCol() * cellSize + cellSize / 2.0, startY + first.getRow() * cellSize + cellSize / 2.0);
+        polyline.moveTo(startX + first.getCol() * cellSize + cellSize / 2.0,
+                startY + first.getRow() * cellSize + cellSize / 2.0);
 
         for (int i = 1; i < path.size(); i++) {
             Cell next = path.get(i);
-            polyline.lineTo(startX + next.getCol() * cellSize + cellSize / 2.0, startY + next.getRow() * cellSize + cellSize / 2.0);
+            polyline.lineTo(startX + next.getCol() * cellSize + cellSize / 2.0,
+                    startY + next.getRow() * cellSize + cellSize / 2.0);
         }
 
-        // Ketebalan garis menyesuaikan ukuran cell
         float strokeWidth = Math.max(2f, cellSize / 3.5f);
-
         g2.setStroke(new BasicStroke(strokeWidth * 1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
         g2.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), 100));
         g2.draw(polyline);
@@ -286,22 +332,18 @@ public class MazePanel extends JPanel {
         if (cell == null) return;
         int x = dx + (cell.getCol() * cellSize);
         int y = dy + (cell.getRow() * cellSize);
-
         int offset = Math.max(2, cellSize / 6);
         int size = cellSize - offset * 2;
 
         g2.setColor(bg);
         g2.fillOval(x + offset, y + offset, size, size);
-
         g2.setColor(Color.WHITE);
         g2.setStroke(new BasicStroke(Math.max(1, cellSize / 10)));
         g2.drawOval(x + offset, y + offset, size, size);
 
         g2.setColor(Color.WHITE);
-        // Font size menyesuaikan ukuran cell
         int fontSize = Math.max(10, cellSize / 2);
         g2.setFont(new Font("Arial", Font.BOLD, fontSize));
-
         FontMetrics fm = g2.getFontMetrics();
         int txtW = fm.stringWidth(text);
         int txtH = fm.getAscent() - fm.getDescent();
@@ -318,11 +360,11 @@ public class MazePanel extends JPanel {
         btn.setFont(new Font("Segoe UI", Font.BOLD, 12));
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btn.setPreferredSize(new Dimension(130, 35));
+
         btn.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) { btn.setBackground(bg.brighter()); }
             public void mouseExited(java.awt.event.MouseEvent evt) { btn.setBackground(bg); }
         });
-
         btn.addActionListener(e -> {
             if(soundManager != null) soundManager.playSFX("click");
         });

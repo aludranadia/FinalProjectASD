@@ -149,14 +149,23 @@ public class GameBoard extends JFrame {
         dicePanel.setMaximumSize(new Dimension(250, 120));
         dicePanel.setOpaque(false);
 
+        // --- UPDATE TOMBOL & SOUND LOGIC ---
+
+        // 1. ROLL DICE: Tidak ada sound click disini (karena nanti ada sound kocok dadu)
         rollDiceButton = createStyledButton("ROLL DICE", new Color(230, 126, 34), Color.BLACK);
         rollDiceButton.addActionListener(e -> handleRoll());
 
+        // 2. NEW GAME: Tambahkan sound click manual
         newGameButton = createStyledButton("NEW GAME", new Color(52, 152, 219), Color.WHITE);
-        newGameButton.addActionListener(e -> handleNewGame());
+        newGameButton.addActionListener(e -> {
+            soundManager.playClick();
+            handleNewGame();
+        });
 
+        // 3. MENU: Tambahkan sound click manual
         backButton = createStyledButton("MENU", new Color(192, 57, 43), Color.WHITE);
         backButton.addActionListener(e -> {
+            soundManager.playClick();
             soundManager.stopAllBGM();
             this.dispose();
             new MainLauncher().setVisible(true);
@@ -198,6 +207,7 @@ public class GameBoard extends JFrame {
         return panel;
     }
 
+    // MODIFIKASI: Menghapus listener sound otomatis agar Roll Dice tidak double sound/bisa dicustom
     private JButton createStyledButton(String text, Color bg, Color fg) {
         JButton btn = new JButton(text);
         btn.setFont(new Font("Segoe UI", Font.BOLD, 20));
@@ -209,11 +219,7 @@ public class GameBoard extends JFrame {
         btn.setAlignmentX(CENTER_ALIGNMENT);
         btn.setMaximumSize(new Dimension(250, 50));
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
-        btn.addActionListener(e -> {
-            if(soundManager != null) soundManager.playClick();
-        });
-
+        // Listener click sound dihapus dari sini, dipindah manual ke masing-masing tombol
         return btn;
     }
 
@@ -551,13 +557,17 @@ public class GameBoard extends JFrame {
                 gbc.gridy = 2;
                 gbc.insets = new Insets(20, 10, 10, 10);
 
-                // TOMBOL ROLL AGAIN
+                // --- PERBAIKAN VISUALISASI BUTTON LUCKY PATH ---
+                // Menggunakan GOLD_COLOR dan teks HITAM agar kontras
                 JButton btnOK = new JButton("ROLL AGAIN");
                 btnOK.setPreferredSize(new Dimension(150, 40));
-                btnOK.setBackground(new Color(230, 126, 34)); // Orange Terang
-                btnOK.setForeground(Color.WHITE);             // Teks Putih
+                btnOK.setBackground(GOLD_COLOR);     // Warna Emas
+                btnOK.setForeground(Color.BLACK);    // Teks Hitam
                 btnOK.setFont(new Font("Segoe UI", Font.BOLD, 14));
                 btnOK.setFocusPainted(false);
+                btnOK.setBorderPainted(false);
+                btnOK.setOpaque(true);               // Pastikan Opaque true
+                btnOK.setContentAreaFilled(true);    // Pastikan Area terisi warna
                 btnOK.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
                 btnOK.addActionListener(e -> {

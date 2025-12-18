@@ -1,8 +1,8 @@
 package maze.controller;
 
 import maze.model.Cell;
-import maze.model.CellType;
 import maze.model.MazeGraph;
+import maze.model.CellType;
 import java.util.*;
 
 public class MazeSolver {
@@ -10,14 +10,17 @@ public class MazeSolver {
     public static class SolverResult {
         private final List<Cell> visitedOrder;
         private final List<List<Cell>> paths;
+        private final double totalCost; // Field baru untuk Cost
 
-        public SolverResult(List<Cell> visitedOrder, List<List<Cell>> paths) {
+        public SolverResult(List<Cell> visitedOrder, List<List<Cell>> paths, double totalCost) {
             this.visitedOrder = visitedOrder;
             this.paths = paths;
+            this.totalCost = totalCost;
         }
 
         public List<Cell> getVisitedOrder() { return visitedOrder; }
         public List<List<Cell>> getPaths() { return paths; }
+        public double getTotalCost() { return totalCost; }
     }
 
     // --- 1. BFS ---
@@ -45,9 +48,15 @@ public class MazeSolver {
                 }
             }
         }
+
         List<List<Cell>> paths = new ArrayList<>();
-        if (found) paths.add(reconstructSinglePath(end));
-        return new SolverResult(visitedOrder, paths);
+        double cost = 0;
+        if (found) {
+            List<Cell> path = reconstructSinglePath(end);
+            paths.add(path);
+            cost = calculatePathCost(path);
+        }
+        return new SolverResult(visitedOrder, paths, cost);
     }
 
     // --- 2. DFS ---
@@ -75,9 +84,15 @@ public class MazeSolver {
                 }
             }
         }
+
         List<List<Cell>> paths = new ArrayList<>();
-        if (found) paths.add(reconstructSinglePath(end));
-        return new SolverResult(visitedOrder, paths);
+        double cost = 0;
+        if (found) {
+            List<Cell> path = reconstructSinglePath(end);
+            paths.add(path);
+            cost = calculatePathCost(path);
+        }
+        return new SolverResult(visitedOrder, paths, cost);
     }
 
     // --- 3. DIJKSTRA ---
@@ -90,16 +105,13 @@ public class MazeSolver {
         return solveWeighted(graph, true);
     }
 
-    // --- 5. PRIM'S ALGORITHM (Modified for Pathfinding) ---
-    // Mencari jalur dengan meminimalkan bobot edge maximum yang dilewati (Minimax Path)
+    // --- 5. PRIM'S ---
     public SolverResult solvePrim(MazeGraph graph) {
         graph.resetGraphState();
         Cell start = graph.getStart();
         Cell end = graph.getEnd();
         List<Cell> visitedOrder = new ArrayList<>();
 
-        // Priority Queue menyimpan [Cost Edge, Node Asal, Node Tujuan]
-        // Kita butuh wrapper class kecil untuk Edge
         class Edge implements Comparable<Edge> {
             Cell source, target;
             int weight;
@@ -108,14 +120,10 @@ public class MazeSolver {
         }
 
         PriorityQueue<Edge> pq = new PriorityQueue<>();
-
-        // Mulai dari start
         start.setVisited(true);
         visitedOrder.add(start);
 
-        // Masukkan semua edge dari start ke PQ
         for(Cell n : start.getNeighbors()) {
-            // Bobot edge = Cost tujuan (karena node-based weight)
             pq.add(new Edge(start, n, n.getType().getCost()));
         }
 
@@ -123,17 +131,13 @@ public class MazeSolver {
         while(!pq.isEmpty()) {
             Edge e = pq.poll();
             Cell curr = e.target;
-
-            if(curr.isVisited()) continue; // Skip jika sudah masuk MST
+            if(curr.isVisited()) continue;
 
             curr.setVisited(true);
             visitedOrder.add(curr);
-            curr.setParent(e.source); // Simpan parent untuk tracking path
+            curr.setParent(e.source);
 
-            if(curr == end) {
-                found = true;
-                break; // Prim selesai saat End point terhubung ke Tree
-            }
+            if(curr == end) { found = true; break; }
 
             for(Cell n : curr.getNeighbors()) {
                 if(!n.isVisited()) {
@@ -143,19 +147,22 @@ public class MazeSolver {
         }
 
         List<List<Cell>> paths = new ArrayList<>();
-        if(found) paths.add(reconstructSinglePath(end));
-        return new SolverResult(visitedOrder, paths);
+        double cost = 0;
+        if(found) {
+            List<Cell> path = reconstructSinglePath(end);
+            paths.add(path);
+            cost = calculatePathCost(path);
+        }
+        return new SolverResult(visitedOrder, paths, cost);
     }
 
-    // --- 6. KRUSKAL'S ALGORITHM (Pathfinding Variant) ---
-    // Menggunakan Disjoint Set Union (DSU)
+    // --- 6. KRUSKAL ---
     public SolverResult solveKruskal(MazeGraph graph) {
         graph.resetGraphState();
         Cell start = graph.getStart();
         Cell end = graph.getEnd();
-        List<Cell> visitedOrder = new ArrayList<>(); // Untuk animasi, kita isi saat edge diproses
+        List<Cell> visitedOrder = new ArrayList<>();
 
-        // 1. Kumpulkan semua Edge di Graph
         class Edge implements Comparable<Edge> {
             Cell u, v;
             int weight;
@@ -163,17 +170,13 @@ public class MazeSolver {
             @Override public int compareTo(Edge o) { return Integer.compare(this.weight, o.weight); }
         }
         List<Edge> allEdges = new ArrayList<>();
-
-        // Scan grid untuk collect edges (hindari duplikasi u-v dan v-u)
         Cell[][] grid = graph.getGrid();
         for(int r=0; r<graph.getRows(); r++){
             for(int c=0; c<graph.getCols(); c++){
                 Cell curr = grid[r][c];
                 if(curr.getType() == CellType.WALL) continue;
                 for(Cell neighbor : curr.getNeighbors()) {
-                    // Masukkan edge hanya sekali (misal: jika hashcode u < hashcode v)
                     if(curr.hashCode() < neighbor.hashCode()) {
-                        // Bobot edge = rata-rata atau max dari kedua node (simplifikasi: cost neighbor)
                         allEdges.add(new Edge(curr, neighbor, neighbor.getType().getCost()));
                     }
                 }
@@ -181,62 +184,40 @@ public class MazeSolver {
         }
         Collections.sort(allEdges);
 
-        // 2. DSU Initialization
-        Map<Cell, Cell> parentMap = new HashMap<>(); // DSU Parent
+        Map<Cell, Cell> parentMap = new HashMap<>();
         for(int r=0; r<graph.getRows(); r++) {
             for(int c=0; c<graph.getCols(); c++) {
-                parentMap.put(grid[r][c], grid[r][c]); // Make Set
+                parentMap.put(grid[r][c], grid[r][c]);
             }
         }
 
-        // Helper DSU Find
-        // (Perlu effectively final wrapper untuk lambda/inner class, jadi pakai method helper di bawah)
-
-        // 3. Process Edges
-        // Kruskal membangun MST global, tapi untuk pathfinding kita bisa berhenti saat Start & End terhubung.
-        // Tapi agar path terbentuk sempurna (backtrackable), kita perlu menyimpan adjacency list khusus MST.
         Map<Cell, List<Cell>> mstAdj = new HashMap<>();
-
         for(Edge e : allEdges) {
             Cell rootU = findSet(parentMap, e.u);
             Cell rootV = findSet(parentMap, e.v);
-
             if(rootU != rootV) {
-                // Union
                 parentMap.put(rootU, rootV);
-
-                // Tambahkan ke MST Adjacency untuk rekonstruksi path nanti
                 mstAdj.computeIfAbsent(e.u, k -> new ArrayList<>()).add(e.v);
                 mstAdj.computeIfAbsent(e.v, k -> new ArrayList<>()).add(e.u);
-
-                // Animasi: tandai node yang terlibat
                 if(!visitedOrder.contains(e.u)) visitedOrder.add(e.u);
                 if(!visitedOrder.contains(e.v)) visitedOrder.add(e.v);
-
-                // Cek apakah Start dan End sudah satu set?
-                if(findSet(parentMap, start) == findSet(parentMap, end)) {
-                    break;
-                }
+                if(findSet(parentMap, start) == findSet(parentMap, end)) break;
             }
         }
 
-        // 4. BFS di MST yang terbentuk untuk mencari jalur Start -> End
-        // Karena MST adalah Tree, hanya ada 1 jalur unik.
-        // Kita gunakan BFS sederhana pada `mstAdj` untuk mengisi parent pointer cell.
         Queue<Cell> q = new LinkedList<>();
         Set<Cell> visitedMST = new HashSet<>();
         q.add(start);
         visitedMST.add(start);
-
+        boolean found = false;
         while(!q.isEmpty()){
             Cell curr = q.poll();
-            if(curr == end) break;
-
+            if(curr == end) { found = true; break; }
             if(mstAdj.containsKey(curr)) {
                 for(Cell neighbor : mstAdj.get(curr)) {
                     if(!visitedMST.contains(neighbor)) {
                         visitedMST.add(neighbor);
-                        neighbor.setParent(curr); // Set parent untuk rekonstruksi
+                        neighbor.setParent(curr);
                         q.add(neighbor);
                     }
                 }
@@ -244,11 +225,15 @@ public class MazeSolver {
         }
 
         List<List<Cell>> paths = new ArrayList<>();
-        paths.add(reconstructSinglePath(end));
-        return new SolverResult(visitedOrder, paths);
+        double cost = 0;
+        if (found) {
+            List<Cell> path = reconstructSinglePath(end);
+            paths.add(path);
+            cost = calculatePathCost(path);
+        }
+        return new SolverResult(visitedOrder, paths, cost);
     }
 
-    // DSU Find Helper (Path Compression)
     private Cell findSet(Map<Cell, Cell> parent, Cell i) {
         if(parent.get(i) == i) return i;
         Cell root = findSet(parent, parent.get(i));
@@ -270,11 +255,20 @@ public class MazeSolver {
 
         while (!pq.isEmpty()) {
             Cell current = pq.poll();
-            if (current.isVisited()) continue;
-            current.setVisited(true);
-            visitedOrder.add(current);
 
-            if (current == end) continue;
+            // LOGIKA PENTING: Untuk multiple paths, kita perbolehkan revisit
+            // jika cost-nya sama, tapi untuk efisiensi PQ, kita skip jika sudah 'closed' dengan jarak lebih kecil.
+            // Namun implementasi simple di sini: tandai visited saat di-poll
+            if (!current.isVisited()) {
+                current.setVisited(true);
+                visitedOrder.add(current);
+            }
+
+            if (current == end) {
+                // Jangan break jika ingin mencari semua kemungkinan parent ke End dengan cost sama
+                // Tapi kita break jika jarak current sudah > jarak end yang sudah ketemu (optimasi)
+                if (current.getDistance() > end.getDistance()) break;
+            }
 
             for (Cell neighbor : current.getNeighbors()) {
                 double newDist = current.getDistance() + neighbor.getType().getCost();
@@ -285,28 +279,37 @@ public class MazeSolver {
                 }
 
                 if (newDist < neighbor.getDistance()) {
+                    // Ditemukan jalur baru yang LEBIH BAIK
                     neighbor.setDistance(newDist);
                     neighbor.setFScore(newDist + heuristic);
-                    neighbor.setParent(current);
+                    neighbor.setParent(current); // Reset parent list menjadi 1
                     pq.add(neighbor);
                 }
                 else if (newDist == neighbor.getDistance()) {
-                    neighbor.addParent(current);
+                    // Ditemukan jalur ALTERNATIF dengan COST SAMA (Multiple Paths)
+                    neighbor.addParent(current); // Tambahkan ke list parent
                 }
             }
         }
 
         List<List<Cell>> allPaths = new ArrayList<>();
+        double cost = 0;
         if (end.getDistance() != Double.MAX_VALUE) {
+            cost = end.getDistance();
+            // Rekonstruksi semua jalur (Multiple Paths)
             reconstructAllPathsRecursive(end, new ArrayList<>(), allPaths);
         }
-        return new SolverResult(visitedOrder, allPaths);
+        return new SolverResult(visitedOrder, allPaths, cost);
     }
 
+    // Digunakan untuk BFS, DFS, Prim, Kruskal (Single Path)
     private List<Cell> reconstructSinglePath(Cell end) {
         List<Cell> path = new ArrayList<>();
         Cell current = end;
+        Set<Cell> visited = new HashSet<>(); // Safety check loop
         while (current != null) {
+            if(visited.contains(current)) break;
+            visited.add(current);
             path.add(current);
             if (!current.getParents().isEmpty()) current = current.getParents().get(0);
             else current = null;
@@ -315,8 +318,15 @@ public class MazeSolver {
         return path;
     }
 
+    // Digunakan untuk Dijkstra & A* (Multiple Paths)
     private void reconstructAllPathsRecursive(Cell current, List<Cell> currentPath, List<List<Cell>> allPaths) {
-        if (currentPath.contains(current)) return;
+        // --- SAFETY GUARD (PENTING!) ---
+        // Batasi jumlah jalur maksimal untuk mencegah OutOfMemoryError / Crash
+        // 50 jalur sudah cukup untuk visualisasi "warna-warni" tanpa membebani RAM
+        if (allPaths.size() >= 50) return;
+
+        if (currentPath.contains(current)) return; // Cegah Cycle
+
         currentPath.add(current);
 
         if (current.getDistance() == 0) {
@@ -324,9 +334,25 @@ public class MazeSolver {
             Collections.reverse(validPath);
             allPaths.add(validPath);
         } else {
-            for (Cell parent : current.getParents()) {
+            List<Cell> parents = current.getParents();
+            if (parents.isEmpty()) return;
+
+            for (Cell parent : parents) {
+                // Branching: copy currentPath untuk setiap cabang
                 reconstructAllPathsRecursive(parent, new ArrayList<>(currentPath), allPaths);
+
+                // Cek limit lagi setelah kembali dari rekursi
+                if (allPaths.size() >= 50) return;
             }
         }
+    }
+
+    // Helper hitung cost manual untuk algoritma non-weighted (BFS/DFS/Prim/Kruskal)
+    private double calculatePathCost(List<Cell> path) {
+        double cost = 0;
+        for (Cell cell : path) {
+            cost += cell.getType().getCost();
+        }
+        return cost;
     }
 }
