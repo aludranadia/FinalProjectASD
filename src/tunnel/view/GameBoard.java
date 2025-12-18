@@ -33,6 +33,7 @@ public class GameBoard extends JFrame {
 
     private SoundManager soundManager;
 
+    // --- KONFIGURASI POSISI GRID (KEMBALI KE STATIS) ---
     private static final int GRID_START_X = 155;
     private static final int GRID_START_Y = 137;
     private static final int CELL_STEP_X = 73;
@@ -58,16 +59,21 @@ public class GameBoard extends JFrame {
     public GameBoard(GameController gameController) {
         this.gameController = gameController;
         this.loadedImages = new HashMap<>();
+
+        // Init Sound & Play BGM
         this.soundManager = new SoundManager();
         this.soundManager.playLoop("game_bgm");
 
         loadResources();
         initComponents();
 
+        // Stop musik jika window ditutup paksa
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosed(WindowEvent e) {
-                soundManager.stopAllBGM();
+                if (soundManager != null) {
+                    soundManager.stopAllBGM();
+                }
             }
         });
     }
@@ -91,14 +97,19 @@ public class GameBoard extends JFrame {
 
     private void initComponents() {
         setTitle("Tunnel Escape - Gameplay");
+
+        // --- SETTING LAYAR TETAP (TIDAK RESPONSIF) ---
         setSize(1150, 850);
+        setResizable(false);
+        // ---------------------------------------------
+
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
-        setResizable(false);
 
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.setBackground(new Color(15, 10, 5));
 
+        // Panel Kiri (Board Game)
         boardPanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -109,6 +120,7 @@ public class GameBoard extends JFrame {
         boardPanel.setPreferredSize(new Dimension(850, 800));
         boardPanel.setBackground(new Color(15, 10, 5));
 
+        // Panel Kanan (Kontrol & Status)
         rightPanel = createRightPanel();
 
         mainPanel.add(boardPanel, BorderLayout.CENTER);
@@ -145,15 +157,17 @@ public class GameBoard extends JFrame {
         dicePanel.setMaximumSize(new Dimension(250, 120));
         dicePanel.setOpaque(false);
 
-        // 1. ROLL DICE (TANPA CLICK SOUND di sini karena akan play sound roll)
+        // --- KONFIGURASI TOMBOL ---
+
+        // 1. ROLL DICE -> playSound = false (Suara kocok dadu akan dipanggil di logic)
         rollDiceButton = createStyledButton("ROLL DICE", new Color(230, 126, 34), Color.BLACK, false);
         rollDiceButton.addActionListener(e -> handleRoll());
 
-        // 2. NEW GAME (DENGAN CLICK SOUND)
+        // 2. NEW GAME -> playSound = true (Klik biasa)
         newGameButton = createStyledButton("NEW GAME", new Color(52, 152, 219), Color.WHITE, true);
         newGameButton.addActionListener(e -> handleNewGame());
 
-        // 3. BACK TO MENU (DENGAN CLICK SOUND)
+        // 3. MENU -> playSound = true (Klik biasa)
         backButton = createStyledButton("MENU", new Color(192, 57, 43), Color.WHITE, true);
         backButton.addActionListener(e -> {
             soundManager.stopAllBGM();
@@ -161,6 +175,7 @@ public class GameBoard extends JFrame {
             new MainLauncher().setVisible(true);
         });
 
+        // Log Area
         gameLogArea = new JTextArea();
         gameLogArea.setEditable(false);
         gameLogArea.setBackground(new Color(40, 30, 20));
@@ -171,6 +186,7 @@ public class GameBoard extends JFrame {
         scrollLog.setPreferredSize(new Dimension(250, 150));
         scrollLog.setBorder(BorderFactory.createLineBorder(new Color(100, 80, 60)));
 
+        // Menyusun Komponen
         panel.add(header);
         panel.add(Box.createRigidArea(new Dimension(0, 20)));
         panel.add(playerListPanel);
@@ -198,7 +214,7 @@ public class GameBoard extends JFrame {
         return panel;
     }
 
-    // UPDATE: Menambahkan parameter boolean playSound
+    // --- HELPER BUTTON YANG MENDUKUNG OPSI SOUND ---
     private JButton createStyledButton(String text, Color bg, Color fg, boolean playSound) {
         JButton btn = new JButton(text);
         btn.setFont(new Font("Segoe UI", Font.BOLD, 20));
@@ -211,7 +227,7 @@ public class GameBoard extends JFrame {
         btn.setMaximumSize(new Dimension(250, 50));
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        // Tambahkan efek klik otomatis jika diminta
+        // Listener untuk suara klik
         if (playSound) {
             btn.addActionListener(e -> {
                 if(soundManager != null) soundManager.playClick();
@@ -219,6 +235,11 @@ public class GameBoard extends JFrame {
         }
 
         return btn;
+    }
+
+    // Overload untuk kemudahan (default playSound = true) jika dibutuhkan di tempat lain
+    private JButton createStyledButton(String text, Color bg, Color fg) {
+        return createStyledButton(text, bg, fg, true); // Default bunyi
     }
 
     private void handleNewGame() {
@@ -266,6 +287,7 @@ public class GameBoard extends JFrame {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
+        // Visual: Gambar statis sesuai ukuran asli (850x800)
         if (backgroundImage != null) {
             g2.drawImage(backgroundImage, 0, 0, 850, 800, null);
         }
@@ -273,13 +295,14 @@ public class GameBoard extends JFrame {
         g2.setFont(new Font("Arial", Font.BOLD, 14));
         FontMetrics fm = g2.getFontMetrics();
 
+        // Visual: Loop Grid menggunakan Konstanta Statis
         for (int row = 0; row < GRID_ROWS; row++) {
             for (int col = 0; col < GRID_COLS; col++) {
                 int nodeNum;
                 if (row % 2 == 0) nodeNum = (row * GRID_COLS) + col + 1;
                 else nodeNum = (row * GRID_COLS) + (GRID_COLS - 1 - col) + 1;
 
-                Point centerPt = getNodeCoordinates(nodeNum);
+                Point centerPt = getNodeCoordinates(nodeNum); // Pakai method tanpa parameter
                 if (centerPt == null) continue;
                 int centerX = centerPt.x;
                 int centerY = centerPt.y;
@@ -325,7 +348,8 @@ public class GameBoard extends JFrame {
         }
         if (shoeImage != null) {
             for (Map.Entry<Integer, Integer> entry : shortcuts.entrySet()) {
-                drawShoeAtNode(g2, entry.getKey()); drawShoeAtNode(g2, entry.getValue());
+                drawShoeAtNode(g2, entry.getKey());
+                drawShoeAtNode(g2, entry.getValue());
             }
         }
 
@@ -363,6 +387,7 @@ public class GameBoard extends JFrame {
         }
     }
 
+    // Method koordinat statis (Revert dari versi full screen)
     private Point getNodeCoordinates(int nodeNum) {
         if (nodeNum < 1 || nodeNum > 64) return null;
         int row = (nodeNum - 1) / GRID_COLS;
@@ -379,6 +404,11 @@ public class GameBoard extends JFrame {
         Point pt = getNodeCoordinates(nodeNum);
         if (pt != null) g2.drawImage(shoeImage, pt.x - 25, pt.y - 25, 20, 20, null);
     }
+
+    // ... (Sisa method visualisasi dadu dll tetap sama) ...
+    // Pastikan method drawDiceVisual, handleRoll, executeTurnLogic,
+    // startMovementAnimation, endTurn, dan showLeaderboardDialog ada di sini
+    // (Tidak saya tulis ulang karena tidak berubah, tapi pastikan ada di file kamu)
 
     private void drawDiceVisual(Graphics2D g2, int x, int y) {
         int size = 80;

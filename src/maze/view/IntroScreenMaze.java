@@ -19,7 +19,7 @@ public class IntroScreenMaze extends JFrame {
         setSize(1000, 700);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        setResizable(false);
+        setResizable(false); // Intro tetap fixed size agar rapi
 
         // Init & Play Intro Music
         soundManager = new SoundManagerMaze();
@@ -152,12 +152,19 @@ public class IntroScreenMaze extends JFrame {
         return btn;
     }
 
+    // --- PERUBAHAN UTAMA: SETTING WINDOW FULL SCREEN ---
     private void openGameWindow() {
         JFrame gameFrame = new JFrame("Maze Graph Solver - Gameplay");
         gameFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        gameFrame.setSize(1000, 800);
+
+        // Mengatur agar window dimulai dalam keadaan Maximized (Full Screen Windowed)
+        gameFrame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+
+        // Tetap memberikan ukuran minimal agar komponen tidak rusak jika dikecilkan sekali
+        gameFrame.setMinimumSize(new Dimension(800, 600));
+
         gameFrame.setLocationRelativeTo(null);
-        gameFrame.setResizable(false);
+        gameFrame.setResizable(true); // User BISA resize layar
 
         MazePanel mazePanel = new MazePanel();
         gameFrame.add(mazePanel);
