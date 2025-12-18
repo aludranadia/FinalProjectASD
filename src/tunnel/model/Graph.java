@@ -1,4 +1,4 @@
-package model;
+package tunnel.model;
 
 import java.util.HashMap;
 import java.util.Map;

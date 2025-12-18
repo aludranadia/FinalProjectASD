@@ -1,6 +1,6 @@
-package controller;
+package tunnel.controller;
 
-import model.*;
+import tunnel.model.*;
 import java.util.*;
 
 public class GameController {

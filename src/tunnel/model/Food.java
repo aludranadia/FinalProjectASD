@@ -1,4 +1,4 @@
-package model;
+package tunnel.model;
 
 public class Food {
     private String name;

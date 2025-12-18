@@ -1,12 +1,11 @@
-package view;
+package tunnel.view;
 
-import controller.GameController;
+import tunnel.controller.GameController;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -22,10 +21,10 @@ public class IntroScreen extends JFrame {
 
     // Daftar Avatar
     private final String[] AVATAR_PATHS = {
-            "resources/images/player 1.png", "resources/images/player 2.png",
-            "resources/images/player 3.png", "resources/images/player 4.png",
-            "resources/images/player 5.png", "resources/images/player 6.png",
-            "resources/images/player 7.png", "resources/images/player 8.png"
+            "resources/tunnel/images/player 1.png", "resources/tunnel/images/player 2.png",
+            "resources/tunnel/images/player 3.png", "resources/tunnel/images/player 4.png",
+            "resources/tunnel/images/player 5.png", "resources/tunnel/images/player 6.png",
+            "resources/tunnel/images/player 7.png", "resources/tunnel/images/player 8.png"
     };
 
     private final String[] AVATAR_NAMES = {
@@ -45,7 +44,7 @@ public class IntroScreen extends JFrame {
 
     private void loadBackground() {
         try {
-            File bgFile = new File("resources/images/bg.png");
+            File bgFile = new File("resources/tunnel/images/bg.png");
             if (bgFile.exists()) {
                 backgroundImage = ImageIO.read(bgFile);
             }
@@ -101,7 +100,7 @@ public class IntroScreen extends JFrame {
                 // Drop Shadow
                 g2d.setColor(new Color(0, 0, 0, 200));
                 g2d.drawString("TUNNEL ESCAPE", 8, 73);
-                // Main Text handled by super
+                // tunnel.Main Text handled by super
                 super.paint(g, c);
             }
         });

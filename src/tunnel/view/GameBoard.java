@@ -1,8 +1,8 @@
-package view;
+package tunnel.view;
 
-import controller.GameController;
-import model.Player;
-import model.Node;
+import tunnel.controller.GameController;
+import tunnel.model.Player;
+import tunnel.model.Node;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -67,10 +67,10 @@ public class GameBoard extends JFrame {
 
     private void loadResources() {
         try {
-            File bgFile = new File("resources/images/bg.png");
+            File bgFile = new File("resources/tunnel/images/bg.png");
             if (bgFile.exists()) backgroundImage = ImageIO.read(bgFile);
 
-            File shoeFile = new File("resources/images/shoe.png");
+            File shoeFile = new File("resources/tunnel/images/shoe.png");
             if (shoeFile.exists()) shoeImage = ImageIO.read(shoeFile);
 
             for (Player p : gameController.getPlayerQueue()) {

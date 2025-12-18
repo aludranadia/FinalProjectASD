@@ -1,5 +1,7 @@
-import controller.GameController;
-import view.IntroScreen;
+package tunnel;
+
+import tunnel.controller.GameController;
+import tunnel.view.IntroScreen;
 import javax.swing.SwingUtilities;
 
 public class Main {

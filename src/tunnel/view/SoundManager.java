@@ -1,4 +1,4 @@
-package view;
+package tunnel.view;
 
 import javax.sound.sampled.*;
 import java.io.File;
@@ -19,17 +19,17 @@ public class SoundManager {
         soundMap = new HashMap<>();
         random = new Random();
 
-        loadSound("intro_bgm", "resources/sounds/intro_bgm.wav"); // Musik Intro
-        loadSound("game_bgm", "resources/sounds/game_bgm.wav");   // Musik Main
-        loadSound("step", "resources/sounds/step.wav");
-        loadSound("slide", "resources/sounds/slide.wav");
-        loadSound("win", "resources/sounds/win.wav");
-        loadSound("bonus", "resources/sounds/bonus.wav"); // Suara Kelipatan 5
-        loadSound("dash", "resources/sounds/dash.wav");   // Suara Shortest Path
+        loadSound("intro_bgm", "resources/tunnel/sounds/intro_bgm.wav"); // Musik Intro
+        loadSound("game_bgm", "resources/tunnel/sounds/game_bgm.wav");   // Musik tunnel.Main
+        loadSound("step", "resources/tunnel/sounds/step.wav");
+        loadSound("slide", "resources/tunnel/sounds/slide.wav");
+        loadSound("win", "resources/tunnel/sounds/win.wav");
+        loadSound("bonus", "resources/tunnel/sounds/bonus.wav"); // Suara Kelipatan 5
+        loadSound("dash", "resources/tunnel/sounds/dash.wav");   // Suara Shortest Path
 
-        loadSound("point_plus", "resources/sounds/coin.wav");  // Suara dapat poin
-        loadSound("point_minus", "resources/sounds/error.wav");  // Suara kurang poin
-        loadSound("roll", "resources/sounds/dice_roll.wav");   // Suara kocok dadu
+        loadSound("point_plus", "resources/tunnel/sounds/coin.wav");  // Suara dapat poin
+        loadSound("point_minus", "resources/tunnel/sounds/error.wav");  // Suara kurang poin
+        loadSound("roll", "resources/tunnel/sounds/dice_roll.wav");   // Suara kocok dadu
     }
 
     private void loadSound(String name, String path) {
