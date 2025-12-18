@@ -371,6 +371,9 @@ public class GameBoard extends JFrame {
     private void handleRoll() {
         if(isRolling || animationTimer != null && animationTimer.isRunning()) return;
         isRolling = true; rollDiceButton.setEnabled(false); newGameButton.setEnabled(false);
+
+        soundManager.play("roll");
+
         Timer rollTimer = new Timer(100, new ActionListener() {
             int count = 0;
             @Override
@@ -393,7 +396,7 @@ public class GameBoard extends JFrame {
         isRolling = false;
         currentDiceNumber = result.getDiceResult().getNumber();
         currentDiceColor = result.getDiceResult().getColor();
-        if (currentDiceColor.equals("RED")) soundManager.play("wind");
+        if (currentDiceColor.equals("RED")) soundManager.play("slide");
 
         String act = currentDiceColor.equals("GREEN") ? "MAJU" : "MUNDUR";
         String foodName = (result.getFood() != null) ? result.getFood().getName() :("-");
@@ -403,15 +406,16 @@ public class GameBoard extends JFrame {
 
         animatingPlayer = result.getPlayer();
         visualCurrentNode = result.getOldPosition();
-        animationPath = new ArrayList<>();
-        int start = result.getOldPosition();
-        int end = result.getNewPosition();
-        if (start < end) for (int i = start + 1; i <= end; i++) animationPath.add(i);
-        else for (int i = start - 1; i >= end; i--) animationPath.add(i);
+        animationPath = result.getMovementPath();
+
+        if (animationPath == null || animationPath.isEmpty()) {
+            animationPath = new ArrayList<>();
+            animationPath.add(result.getNewPosition());
+        }
 
         int speedDelay = result.isUsedShortcut() ? 50 : 300;
-        if (animationPath.isEmpty()) endTurn(result);
-        else startMovementAnimation(result, speedDelay);
+
+        startMovementAnimation(result, speedDelay);
         rightPanel.repaint();
     }
 
@@ -429,8 +433,7 @@ public class GameBoard extends JFrame {
                 if (index < animationPath.size()) {
                     visualCurrentNode = animationPath.get(index);
 
-                    if (isRunningFast) {
-                    } else {
+                    if (!isRunningFast) {
                         soundManager.playStep();
                     }
 
@@ -462,6 +465,13 @@ public class GameBoard extends JFrame {
             rollDiceButton.setEnabled(false);
         } else {
             rollDiceButton.setEnabled(true);
+
+            int coinEffect = result.getCoinEffect();
+            if (coinEffect > 0) {
+                soundManager.play("point_plus"); // Suara Koin +
+            } else if (coinEffect < 0) {
+                soundManager.play("point_minus");  // Suara Koin -
+            }
 
             if (result.isBonusTurn()) {
                 soundManager.play("bonus");

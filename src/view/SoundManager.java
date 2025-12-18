@@ -21,18 +21,18 @@ public class SoundManager {
 
         loadSound("intro_bgm", "resources/sounds/intro_bgm.wav"); // Musik Intro
         loadSound("game_bgm", "resources/sounds/game_bgm.wav");   // Musik Main
-
-        loadSound("wind", "resources/sounds/wind.wav");
+        loadSound("step", "resources/sounds/step.wav");
+        loadSound("slide", "resources/sounds/slide.wav");
         loadSound("win", "resources/sounds/win.wav");
         loadSound("bonus", "resources/sounds/bonus.wav"); // Suara Kelipatan 5
         loadSound("dash", "resources/sounds/dash.wav");   // Suara Shortest Path
 
-        stepClips = new Clip[2];
-        stepClips[0] = loadClipInternal("resources/sounds/step1.wav");
-        stepClips[1] = loadClipInternal("resources/sounds/step2.wav");
+        loadSound("point_plus", "resources/sounds/coin.wav");  // Suara dapat poin
+        loadSound("point_minus", "resources/sounds/error.wav");  // Suara kurang poin
+        loadSound("roll", "resources/sounds/dice_roll.wav");   // Suara kocok dadu
     }
 
-    private Clip loadClipInternal(String path) {
+    private void loadSound(String name, String path) {
         try {
             File file = new File(path);
             if (file.exists()) {
@@ -50,20 +50,12 @@ public class SoundManager {
                 AudioInputStream decodedAudioIn = AudioSystem.getAudioInputStream(decodedFormat, audioIn);
                 Clip clip = AudioSystem.getClip();
                 clip.open(decodedAudioIn);
-                return clip;
+                soundMap.put(name, clip);
+            } else {
+                // System.err.println("Sound missing: " + path); //untuk debug
             }
         } catch (Exception e) {
-            System.err.println("Error loading clip " + path + ": " + e.getMessage());
-        }
-        return null;
-    }
-
-    private void loadSound(String name, String path) {
-        Clip clip = loadClipInternal(path);
-        if (clip != null) {
-            soundMap.put(name, clip);
-        } else {
-            System.err.println("Sound file missing: " + path);
+            // Silent catch
         }
     }
 
@@ -78,19 +70,7 @@ public class SoundManager {
     }
 
     public void playStep() {
-        if (stepClips == null || stepClips.length == 0) return;
-
-        // Pilih index acak (0 atau 1)
-        int index = random.nextInt(stepClips.length);
-        Clip clip = stepClips[index];
-
-        if (clip != null) {
-            if (clip.isRunning()) clip.stop();
-            clip.setFramePosition(0);
-            // Volume langkah sedikit lebih kecil dari SFX utama agar tidak berisik
-            setClipVolume(clip, SFX_VOLUME * 0.7f);
-            clip.start();
-        }
+        play("step");
     }
 
     public void playLoop(String name) {
