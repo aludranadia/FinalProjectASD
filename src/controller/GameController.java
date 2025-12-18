@@ -60,6 +60,7 @@ public class GameController {
 
             for (int i = 0; i < energySteps; i++) {
                 if (currentSimulatedPos >= 64) break;
+
                 int destShortcut = graph.getShortcutDestination(currentSimulatedPos);
                 if (canUseShortcut && destShortcut != -1) {
                     currentSimulatedPos = destShortcut;
@@ -67,24 +68,30 @@ public class GameController {
                 } else {
                     currentSimulatedPos++;
                 }
+
                 if (currentSimulatedPos > 64) currentSimulatedPos = 64;
+
                 movementPath.add(currentSimulatedPos);
                 currentPlayer.setPosition(currentSimulatedPos);
             }
+
         } else {
             energySteps = -diceNumber;
             int stepsToMoveBack = diceNumber;
             int currentSimulatedPos = oldPosition;
+
             for(int i=0; i<stepsToMoveBack; i++){
                 if(currentSimulatedPos > 1) {
                     currentSimulatedPos--;
+
                     movementPath.add(currentSimulatedPos);
+
+                    currentPlayer.setPosition(currentSimulatedPos);
                 }
             }
-            currentPlayer.moveBackward(diceNumber);
+            // HAPUS BARIS INI -> currentPlayer.moveBackward(diceNumber);
         }
 
-        // --- TAMBAHAN: LOGIKA AMBIL KOIN ---
         Node finalNode = graph.getNode(currentPlayer.getCurrentPosition());
         int coinEffect = 0;
         if (finalNode != null) {
