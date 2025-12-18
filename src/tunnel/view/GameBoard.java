@@ -145,21 +145,17 @@ public class GameBoard extends JFrame {
         dicePanel.setMaximumSize(new Dimension(250, 120));
         dicePanel.setOpaque(false);
 
-        // 1. ROLL DICE (TANPA CLICK SOUND karena ada suara kocok)
-        rollDiceButton = createStyledButton("ROLL DICE", new Color(230, 126, 34), Color.BLACK);
+        // 1. ROLL DICE (TANPA CLICK SOUND di sini karena akan play sound roll)
+        rollDiceButton = createStyledButton("ROLL DICE", new Color(230, 126, 34), Color.BLACK, false);
         rollDiceButton.addActionListener(e -> handleRoll());
 
         // 2. NEW GAME (DENGAN CLICK SOUND)
-        newGameButton = createStyledButton("NEW GAME", new Color(52, 152, 219), Color.WHITE);
-        newGameButton.addActionListener(e -> {
-            soundManager.playClick(); // Play Sound
-            handleNewGame();
-        });
+        newGameButton = createStyledButton("NEW GAME", new Color(52, 152, 219), Color.WHITE, true);
+        newGameButton.addActionListener(e -> handleNewGame());
 
         // 3. BACK TO MENU (DENGAN CLICK SOUND)
-        backButton = createStyledButton("MENU", new Color(192, 57, 43), Color.WHITE);
+        backButton = createStyledButton("MENU", new Color(192, 57, 43), Color.WHITE, true);
         backButton.addActionListener(e -> {
-            soundManager.playClick(); // Play Sound
             soundManager.stopAllBGM();
             this.dispose();
             new MainLauncher().setVisible(true);
@@ -202,7 +198,8 @@ public class GameBoard extends JFrame {
         return panel;
     }
 
-    private JButton createStyledButton(String text, Color bg, Color fg) {
+    // UPDATE: Menambahkan parameter boolean playSound
+    private JButton createStyledButton(String text, Color bg, Color fg, boolean playSound) {
         JButton btn = new JButton(text);
         btn.setFont(new Font("Segoe UI", Font.BOLD, 20));
         btn.setBackground(bg);
@@ -213,6 +210,14 @@ public class GameBoard extends JFrame {
         btn.setAlignmentX(CENTER_ALIGNMENT);
         btn.setMaximumSize(new Dimension(250, 50));
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        // Tambahkan efek klik otomatis jika diminta
+        if (playSound) {
+            btn.addActionListener(e -> {
+                if(soundManager != null) soundManager.playClick();
+            });
+        }
+
         return btn;
     }
 
@@ -637,7 +642,6 @@ public class GameBoard extends JFrame {
         closeBtn.setForeground(Color.WHITE);
         closeBtn.setFocusPainted(false);
         closeBtn.addActionListener(e -> {
-            soundManager.playClick(); // Play Sound
             dialog.dispose();
             handleNewGame();
         });
