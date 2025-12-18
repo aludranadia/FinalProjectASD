@@ -15,14 +15,13 @@ import java.util.List;
 public class MazePanel extends JPanel {
     private static final int CELL_SIZE = 28;
 
-    // Palet warna jalur solusi (tetap terang agar kontras dengan background gelap)
     private static final Color[] PATH_COLORS = {
-            new Color(255, 50, 50),    // Merah Terang
-            new Color(0, 255, 255),    // Cyan
-            new Color(255, 255, 0),    // Kuning
-            new Color(255, 0, 255),    // Magenta
-            new Color(50, 255, 100),   // Hijau Neon
-            new Color(255, 165, 0)     // Oranye
+            new Color(255, 50, 50),
+            new Color(0, 255, 255),
+            new Color(255, 255, 0),
+            new Color(255, 0, 255),
+            new Color(50, 255, 100),
+            new Color(255, 165, 0)
     };
 
     private MazeGraph mazeGraph;
@@ -36,15 +35,29 @@ public class MazePanel extends JPanel {
     private boolean isScanning = false;
     private boolean isPathing = false;
 
+    // SoundManager instance
+    private SoundManagerMaze soundManager;
+
     public MazePanel() {
         this.setLayout(new BorderLayout());
-        this.setBackground(Color.BLACK); // Background Panel Hitam Pekat
+        this.setBackground(Color.BLACK);
         this.solver = new MazeSolver();
+
+        // Inisialisasi Sound Manager Baru untuk Gameplay
+        this.soundManager = new SoundManagerMaze();
+        this.soundManager.playBGM("game"); // Play Game BGM
 
         generateNewMaze(21, 35);
 
         JPanel controlPanel = createControlPanel();
         this.add(controlPanel, BorderLayout.SOUTH);
+    }
+
+    // Method helper untuk mematikan musik dari luar (dipanggil oleh Frame)
+    public void stopMusic() {
+        if (soundManager != null) {
+            soundManager.stopAll();
+        }
     }
 
     private void generateNewMaze(int rows, int cols) {
@@ -84,8 +97,14 @@ public class MazePanel extends JPanel {
 
         JButton btnBack = createStyledButton("Back to Menu", new Color(192, 57, 43));
         btnBack.addActionListener(e -> {
+            // STOP MUSIC HERE
+            stopMusic();
+
             Window window = SwingUtilities.getWindowAncestor(this);
-            if (window != null) window.dispose();
+            if (window != null) {
+                window.dispose();
+            }
+
             new MainLauncher().setVisible(true);
         });
 
@@ -106,6 +125,7 @@ public class MazePanel extends JPanel {
     }
 
     private void runSolver(String type) {
+        soundManager.playSFX("click");
         if (timer != null && timer.isRunning()) return;
 
         visitedAnimation.clear();
@@ -128,6 +148,8 @@ public class MazePanel extends JPanel {
             final List<Cell> order = result.getVisitedOrder();
             final List<List<Cell>> paths = result.getPaths();
 
+            soundManager.playSFX("scan");
+
             timer = new Timer(15, e -> {
                 if (isScanning) {
                     for (int i = 0; i < 5; i++) {
@@ -144,6 +166,7 @@ public class MazePanel extends JPanel {
                     }
                 } else if (isPathing) {
                     ((Timer)e.getSource()).stop();
+                    soundManager.playSFX("success");
                 }
                 repaint();
             });
@@ -164,7 +187,6 @@ public class MazePanel extends JPanel {
         int startX = (getWidth() - totalW) / 2;
         int startY = (getHeight() - totalH) / 2;
 
-        // 1. GAMBAR GRID (WALL & TERRACE)
         Cell[][] grid = mazeGraph.getGrid();
         for (int r = 0; r < mazeGraph.getRows(); r++) {
             for (int c = 0; c < mazeGraph.getCols(); c++) {
@@ -175,28 +197,18 @@ public class MazePanel extends JPanel {
             }
         }
 
-        // 2. ANIMASI SCANNING (ABU-ABU TRANSPARAN)
-        // Warna: Abu-abu medium (120, 120, 120) dengan transparansi (150)
-        // Ini akan membuat terrace abu-abu tua menjadi lebih terang sedikit tapi tetap bernuansa abu
         g2.setColor(new Color(150, 150, 150, 120));
         for (Cell cell : visitedAnimation) {
             if (cell.getType() != CellType.WALL) {
                 int x = startX + (cell.getCol() * CELL_SIZE);
                 int y = startY + (cell.getRow() * CELL_SIZE);
-
-                // Gambar kotak penuh
                 g2.fillRect(x, y, CELL_SIZE, CELL_SIZE);
-
-                // Border tipis agar terlihat progressnya
                 g2.setColor(new Color(200, 200, 200, 50));
                 g2.drawRect(x, y, CELL_SIZE, CELL_SIZE);
-
-                // Kembalikan warna fill
                 g2.setColor(new Color(150, 150, 150, 120));
             }
         }
 
-        // 3. GAMBAR JALUR SOLUSI
         if (isPathing && allSolutionPaths != null && !allSolutionPaths.isEmpty()) {
             int colorIndex = 0;
             for (List<Cell> path : allSolutionPaths) {
@@ -207,32 +219,22 @@ public class MazePanel extends JPanel {
             }
         }
 
-        // 4. Marker Start & End
         drawStyledMarker(g2, mazeGraph.getStart(), new Color(46, 204, 113), "S", startX, startY);
         drawStyledMarker(g2, mazeGraph.getEnd(), new Color(155, 89, 182), "E", startX, startY);
     }
 
-    // --- VISUALISASI CUSTOM ---
-
     private void drawCustomCell(Graphics2D g2, Cell cell, int x, int y) {
         if (cell.getType() == CellType.WALL) {
-            // WALL: Hitam Polos, Tanpa Border -> Menyatu
             g2.setColor(Color.BLACK);
             g2.fillRect(x, y, CELL_SIZE, CELL_SIZE);
-            // Tidak ada drawRect di sini agar tembok menyatu
         } else if (cell.getType() == CellType.TERRACE) {
-            // TERRACE: Abu-abu Tua
             g2.setColor(new Color(60, 60, 60));
             g2.fillRect(x, y, CELL_SIZE, CELL_SIZE);
-
-            // Border sangat tipis dan gelap agar grid tetap terlihat samar-samar
             g2.setColor(new Color(40, 40, 40));
             g2.drawRect(x, y, CELL_SIZE, CELL_SIZE);
         } else {
-            // Tipe Lain (Water, Mud, Grass) - Gunakan warna aslinya
             g2.setColor(cell.getType().getColor());
             g2.fillRect(x, y, CELL_SIZE, CELL_SIZE);
-
             g2.setColor(new Color(0, 0, 0, 50));
             g2.drawRect(x, y, CELL_SIZE, CELL_SIZE);
         }
@@ -248,12 +250,10 @@ public class MazePanel extends JPanel {
             polyline.lineTo(startX + next.getCol() * CELL_SIZE + CELL_SIZE / 2.0, startY + next.getRow() * CELL_SIZE + CELL_SIZE / 2.0);
         }
 
-        // Glow Effect di bawah garis
         g2.setStroke(new BasicStroke(8f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-        g2.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), 100)); // Glow warna sama tapi transparan
+        g2.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), 100));
         g2.draw(polyline);
 
-        // Garis Utama
         g2.setStroke(new BasicStroke(4f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
         g2.setColor(color);
         g2.draw(polyline);
@@ -294,6 +294,10 @@ public class MazePanel extends JPanel {
         btn.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) { btn.setBackground(bg.brighter()); }
             public void mouseExited(java.awt.event.MouseEvent evt) { btn.setBackground(bg); }
+        });
+
+        btn.addActionListener(e -> {
+            if(soundManager != null) soundManager.playSFX("click");
         });
         return btn;
     }

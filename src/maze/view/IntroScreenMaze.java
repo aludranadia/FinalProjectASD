@@ -4,16 +4,15 @@ import main.MainLauncher;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 
 public class IntroScreenMaze extends JFrame {
     private BufferedImage backgroundImage;
+    private SoundManagerMaze soundManager;
 
     public IntroScreenMaze() {
         setTitle("The Maze - Graph Visualizer");
@@ -22,8 +21,19 @@ public class IntroScreenMaze extends JFrame {
         setLocationRelativeTo(null);
         setResizable(false);
 
+        // Init & Play Intro Music
+        soundManager = new SoundManagerMaze();
+        soundManager.playBGM("intro");
+
         loadBackground();
         initComponents();
+
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent e) {
+                soundManager.stopAll();
+            }
+        });
     }
 
     private void loadBackground() {
@@ -38,7 +48,6 @@ public class IntroScreenMaze extends JFrame {
     }
 
     private void initComponents() {
-        // PANEL UTAMA DENGAN BACKGROUND DAN OVERLAY GELAP
         JPanel mainPanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -46,10 +55,8 @@ public class IntroScreenMaze extends JFrame {
                 Graphics2D g2d = (Graphics2D) g;
                 g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-                // Gambar Background
                 if (backgroundImage != null) {
                     g2d.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), null);
-                    // Overlay Gelap agar teks putih terbaca jelas
                     g2d.setColor(new Color(0, 0, 0, 150));
                     g2d.fillRect(0, 0, getWidth(), getHeight());
                 } else {
@@ -62,19 +69,16 @@ public class IntroScreenMaze extends JFrame {
         mainPanel.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
 
-        // --- 1. JUDUL UTAMA ---
         JLabel titleLabel = new JLabel("THE MAZE");
         titleLabel.setFont(new Font("Impact", Font.BOLD, 90));
-        titleLabel.setForeground(new Color(255, 215, 0)); // Emas
-
-        // Efek Shadow Tebal
+        titleLabel.setForeground(new Color(255, 215, 0));
         titleLabel.setUI(new javax.swing.plaf.basic.BasicLabelUI() {
             @Override
             public void paint(Graphics g, JComponent c) {
                 Graphics2D g2 = (Graphics2D) g;
                 g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
                 g2.setColor(new Color(0, 0, 0, 200));
-                g2.drawString("THE MAZE", 8, 88); // Shadow offset
+                g2.drawString("THE MAZE", 8, 88);
                 super.paint(g, c);
             }
         });
@@ -83,43 +87,37 @@ public class IntroScreenMaze extends JFrame {
         gbc.insets = new Insets(0, 0, 10, 0);
         mainPanel.add(titleLabel, gbc);
 
-        // --- 2. SUB-JUDUL ---
         JLabel subtitleLabel = new JLabel("GRAPH ALGORITHM VISUALIZER");
         subtitleLabel.setFont(new Font("Segoe UI", Font.BOLD, 28));
-        subtitleLabel.setForeground(new Color(200, 200, 200)); // Abu-abu terang
-
+        subtitleLabel.setForeground(new Color(200, 200, 200));
         gbc.gridy = 1;
         gbc.insets = new Insets(0, 0, 30, 0);
         mainPanel.add(subtitleLabel, gbc);
 
-        // --- 3. DESKRIPSI SINGKAT (UPDATED) ---
         String descText = "<html><div style='text-align: center; color: white; font-family: Segoe UI; font-size: 20px; font-weight: bold;'>" +
                 "Choose your graph algorithm to find the way out" +
                 "</div></html>";
-
         JLabel descLabel = new JLabel(descText);
         descLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
         gbc.gridy = 2;
-        gbc.insets = new Insets(0, 0, 60, 0); // Jarak ke tombol
+        gbc.insets = new Insets(0, 0, 60, 0);
         mainPanel.add(descLabel, gbc);
 
-        // --- 4. TOMBOL AKSI ---
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 0));
         buttonPanel.setOpaque(false);
 
-        // Tombol Back
         JButton backBtn = createStyledButton("BACK TO MENU", new Color(192, 57, 43), Color.WHITE);
         backBtn.addActionListener(e -> {
+            soundManager.stopAll();
             this.dispose();
             new MainLauncher().setVisible(true);
         });
 
-        // Tombol Start
         JButton startBtn = createStyledButton("ENTER THE MAZE", new Color(255, 193, 7), Color.BLACK);
         startBtn.setPreferredSize(new Dimension(250, 55));
         startBtn.setFont(new Font("Segoe UI", Font.BOLD, 20));
         startBtn.addActionListener(e -> {
+            soundManager.stopAll();
             this.dispose();
             openGameWindow();
         });
@@ -148,6 +146,7 @@ public class IntroScreenMaze extends JFrame {
         btn.addMouseListener(new MouseAdapter() {
             public void mouseEntered(MouseEvent e) { btn.setBackground(bg.brighter()); }
             public void mouseExited(MouseEvent e) { btn.setBackground(bg); }
+            public void mousePressed(MouseEvent e) { soundManager.playSFX("click"); }
         });
 
         return btn;
@@ -160,11 +159,13 @@ public class IntroScreenMaze extends JFrame {
         gameFrame.setLocationRelativeTo(null);
         gameFrame.setResizable(false);
 
-        gameFrame.add(new MazePanel());
+        MazePanel mazePanel = new MazePanel();
+        gameFrame.add(mazePanel);
 
         gameFrame.addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
             public void windowClosed(java.awt.event.WindowEvent windowEvent) {
+                mazePanel.stopMusic();
                 new MainLauncher().setVisible(true);
             }
         });
