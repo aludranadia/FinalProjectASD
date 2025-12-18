@@ -138,13 +138,15 @@ public class IntroScreen extends JFrame {
         // Gunakan Font yang aman untuk Emoji
         String fontStyle = "font-family: 'Segoe UI Emoji', 'Segoe UI', sans-serif;";
 
-        String descText = "<html><div style='text-align: center; " + fontStyle + " color: #FFFFFF;'>" +
-                "<h2 style='color: #FFD700; margin-bottom: 15px; font-size: 18px;'>⚡ MISSION PROTOCOL ⚡</h2>" +
-                "<p style='font-size: 14px; line-height: 1.6; margin-bottom: 10px;'>" +
-                "🏃‍♂️ <b style='color: #FFFFFF;'>Goal:</b> Reach <span style='color: #4db8ff;'>Node 64</span> to escape the dark tunnel.<br>" +
-                "🍖 <b style='color: #FFFFFF;'>Survival:</b> Roll dice to collect food & energy to move forward.<br>" +
-                "⚠️ <b style='color: #FFFFFF;'>Danger:</b> Watch out for the <span style='color: #ff6b6b;'>RED DICE</span>! <br>" +
-                "The wind will blow you backwards!</p>" +
+        String descText = "<html><div style='text-align: center; " + fontStyle + "'>" +
+                "<h2 style='color: #FFD700; margin-bottom: 15px; font-size: 20px;'>⚡ MISSION PROTOCOL ⚡</h2>" +
+                // Pembungkus UTAMA warna PUTIH untuk semua teks
+                "<span style='font-size: 15px; color: #FFFFFF;'>" +
+                "🏃‍♂️ <b>Goal:</b> Reach <span style='color: #00FFFF;'>Node 64</span> to escape the dark tunnel.<br>" + // Node 64 Cyan
+                "🍖 <b>Survival:</b> Roll dice to collect food & energy to move forward.<br>" +
+                "⚠️ <b>Danger:</b> Watch out for the <span style='color: #FF3333;'>RED DICE</span>!<br>" + // RED DICE Merah
+                "The wind will blow you backwards!" +
+                "</span>" + // Tutup pembungkus putih
                 "</div></html>";
 
         JLabel descLabel = new JLabel(descText);
