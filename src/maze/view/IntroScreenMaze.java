@@ -1,25 +1,32 @@
 package maze.view;
 
+import main.MainLauncher;
+
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import javax.imageio.ImageIO;
 
 public class IntroScreenMaze extends JFrame {
-    private Image backgroundImage;
+    private BufferedImage backgroundImage;
 
     public IntroScreenMaze() {
-        setTitle("Maze Graph Solver - Intro");
-        setSize(900, 650);
+        setTitle("The Maze - Graph Visualizer");
+        setSize(1000, 700);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(false);
 
-        // Load Background Image
+        loadBackground();
+        initComponents();
+    }
+
+    private void loadBackground() {
         try {
             File bgFile = new File("resources/maze/images/maze_bg.jpg");
             if (bgFile.exists()) {
@@ -28,126 +35,140 @@ public class IntroScreenMaze extends JFrame {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
 
-        // Panel Utama dengan Custom Painting untuk Background
+    private void initComponents() {
+        // PANEL UTAMA DENGAN BACKGROUND DAN OVERLAY GELAP
         JPanel mainPanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
-                if (backgroundImage != null) {
-                    g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-                    g.setColor(new Color(0, 0, 0, 150));
-                    g.fillRect(0, 0, getWidth(), getHeight());
+                // Gambar Background
+                if (backgroundImage != null) {
+                    g2d.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), null);
+                    // Overlay Gelap agar teks putih terbaca jelas
+                    g2d.setColor(new Color(0, 0, 0, 150));
+                    g2d.fillRect(0, 0, getWidth(), getHeight());
                 } else {
-                    Graphics2D g2d = (Graphics2D) g;
-                    GradientPaint gp = new GradientPaint(0, 0, new Color(10, 20, 40), 0, getHeight(), new Color(30, 60, 90));
+                    GradientPaint gp = new GradientPaint(0, 0, new Color(10, 20, 40), 0, getHeight(), new Color(0, 0, 0));
                     g2d.setPaint(gp);
                     g2d.fillRect(0, 0, getWidth(), getHeight());
                 }
             }
         };
-        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
-        mainPanel.setBorder(new EmptyBorder(50, 50, 50, 50));
+        mainPanel.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
 
-        // --- ELEMEN UI ---
-
-        // 1. Judul Game
-        JLabel titleLabel = new JLabel("THE LABYRINTH");
-        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        titleLabel.setFont(new Font("Cinzel", Font.BOLD, 60)); // Font seram/elegan jika ada, atau Serif
+        // --- 1. JUDUL UTAMA ---
+        JLabel titleLabel = new JLabel("THE MAZE");
+        titleLabel.setFont(new Font("Impact", Font.BOLD, 90));
         titleLabel.setForeground(new Color(255, 215, 0)); // Emas
 
-        JLabel subtitleLabel = new JLabel("Graph Algorithm Visualizer");
-        subtitleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        subtitleLabel.setFont(new Font("SansSerif", Font.PLAIN, 20));
-        subtitleLabel.setForeground(new Color(200, 200, 200));
-
-        // 2. Deskripsi Singkat
-        JTextArea descArea = new JTextArea(
-                "Explore the power of Graph Theory.\n" +
-                        "Visualize how algorithms like BFS, DFS, Dijkstra, and A* \n" +
-                        "find their way through complex mazes and weighted terrains."
-        );
-        descArea.setOpaque(false);
-        descArea.setEditable(false);
-        descArea.setFont(new Font("SansSerif", Font.ITALIC, 16));
-        descArea.setForeground(Color.WHITE);
-        descArea.setAlignmentX(Component.CENTER_ALIGNMENT);
-        descArea.setMaximumSize(new Dimension(600, 100));
-        descArea.setLineWrap(true);
-        descArea.setWrapStyleWord(true);
-        // Center alignment text trick
-        // (JTextArea agak tricky buat center text, jadi kita pakai alignmentX container saja)
-
-        // 3. Tombol Start
-        JButton startButton = new JButton("ENTER THE MAZE");
-        startButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        startButton.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        startButton.setForeground(Color.WHITE);
-        startButton.setBackground(new Color(0, 150, 136)); // Teal color
-        startButton.setFocusPainted(false);
-        startButton.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(Color.WHITE, 2),
-                BorderFactory.createEmptyBorder(10, 30, 10, 30)
-        ));
-        startButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
-        // Efek Hover pada Tombol
-        startButton.addMouseListener(new MouseAdapter() {
+        // Efek Shadow Tebal
+        titleLabel.setUI(new javax.swing.plaf.basic.BasicLabelUI() {
             @Override
-            public void mouseEntered(MouseEvent e) {
-                startButton.setBackground(new Color(0, 121, 107)); // Lebih gelap saat hover
-                startButton.setBorder(BorderFactory.createCompoundBorder(
-                        BorderFactory.createLineBorder(new Color(255, 215, 0), 2), // Border jadi emas
-                        BorderFactory.createEmptyBorder(10, 30, 10, 30)
-                ));
-            }
-            @Override
-            public void mouseExited(MouseEvent e) {
-                startButton.setBackground(new Color(0, 150, 136));
-                startButton.setBorder(BorderFactory.createCompoundBorder(
-                        BorderFactory.createLineBorder(Color.WHITE, 2),
-                        BorderFactory.createEmptyBorder(10, 30, 10, 30)
-                ));
+            public void paint(Graphics g, JComponent c) {
+                Graphics2D g2 = (Graphics2D) g;
+                g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                g2.setColor(new Color(0, 0, 0, 200));
+                g2.drawString("THE MAZE", 8, 88); // Shadow offset
+                super.paint(g, c);
             }
         });
 
-        // Action Listener untuk masuk ke Game
-        startButton.addActionListener(e -> {
-            this.dispose(); // Tutup Intro
-            openGameWindow(); // Buka Game Utama
+        gbc.gridx = 0; gbc.gridy = 0;
+        gbc.insets = new Insets(0, 0, 10, 0);
+        mainPanel.add(titleLabel, gbc);
+
+        // --- 2. SUB-JUDUL ---
+        JLabel subtitleLabel = new JLabel("GRAPH ALGORITHM VISUALIZER");
+        subtitleLabel.setFont(new Font("Segoe UI", Font.BOLD, 28));
+        subtitleLabel.setForeground(new Color(200, 200, 200)); // Abu-abu terang
+
+        gbc.gridy = 1;
+        gbc.insets = new Insets(0, 0, 30, 0);
+        mainPanel.add(subtitleLabel, gbc);
+
+        // --- 3. DESKRIPSI SINGKAT (UPDATED) ---
+        String descText = "<html><div style='text-align: center; color: white; font-family: Segoe UI; font-size: 20px; font-weight: bold;'>" +
+                "Choose your graph algorithm to find the way out" +
+                "</div></html>";
+
+        JLabel descLabel = new JLabel(descText);
+        descLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        gbc.gridy = 2;
+        gbc.insets = new Insets(0, 0, 60, 0); // Jarak ke tombol
+        mainPanel.add(descLabel, gbc);
+
+        // --- 4. TOMBOL AKSI ---
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 0));
+        buttonPanel.setOpaque(false);
+
+        // Tombol Back
+        JButton backBtn = createStyledButton("BACK TO MENU", new Color(192, 57, 43), Color.WHITE);
+        backBtn.addActionListener(e -> {
+            this.dispose();
+            new MainLauncher().setVisible(true);
         });
 
-        // --- MENYUSUN LAYOUT ---
-        mainPanel.add(Box.createVerticalGlue()); // Push ke tengah
-        mainPanel.add(titleLabel);
-        mainPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-        mainPanel.add(subtitleLabel);
-        mainPanel.add(Box.createRigidArea(new Dimension(0, 40)));
-        mainPanel.add(descArea);
-        mainPanel.add(Box.createRigidArea(new Dimension(0, 50)));
-        mainPanel.add(startButton);
-        mainPanel.add(Box.createVerticalGlue()); // Push ke tengah
+        // Tombol Start
+        JButton startBtn = createStyledButton("ENTER THE MAZE", new Color(255, 193, 7), Color.BLACK);
+        startBtn.setPreferredSize(new Dimension(250, 55));
+        startBtn.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        startBtn.addActionListener(e -> {
+            this.dispose();
+            openGameWindow();
+        });
+
+        buttonPanel.add(backBtn);
+        buttonPanel.add(startBtn);
+
+        gbc.gridy = 3;
+        gbc.insets = new Insets(10, 0, 10, 0);
+        mainPanel.add(buttonPanel, gbc);
 
         add(mainPanel);
     }
 
+    private JButton createStyledButton(String text, Color bg, Color fg) {
+        JButton btn = new JButton(text);
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        btn.setBackground(bg);
+        btn.setForeground(fg);
+        btn.setFocusPainted(false);
+        btn.setBorderPainted(false);
+        btn.setOpaque(true);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.setPreferredSize(new Dimension(200, 50));
+
+        btn.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) { btn.setBackground(bg.brighter()); }
+            public void mouseExited(MouseEvent e) { btn.setBackground(bg); }
+        });
+
+        return btn;
+    }
+
     private void openGameWindow() {
         JFrame gameFrame = new JFrame("Maze Graph Solver - Gameplay");
-        gameFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        gameFrame.setSize(1000, 750);
+        gameFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        gameFrame.setSize(1000, 800);
         gameFrame.setLocationRelativeTo(null);
         gameFrame.setResizable(false);
 
-        // Memanggil MazePanel yang sudah kamu punya
         gameFrame.add(new MazePanel());
 
-        gameFrame.setVisible(true);
-    }
+        gameFrame.addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosed(java.awt.event.WindowEvent windowEvent) {
+                new MainLauncher().setVisible(true);
+            }
+        });
 
-    // Main method untuk testing tampilan ini saja
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new IntroScreenMaze().setVisible(true));
+        gameFrame.setVisible(true);
     }
 }
