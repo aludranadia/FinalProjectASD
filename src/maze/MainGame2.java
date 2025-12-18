@@ -3,7 +3,7 @@ package maze;
 import maze.view.MazePanel;
 import javax.swing.*;
 
-public class Main {
+public class MainGame2 {
     public static void main(String[] args) {
         // Menjalankan UI di Event Dispatch Thread (Standard Swing)
         SwingUtilities.invokeLater(() -> {
