@@ -3,7 +3,6 @@ package tunnel.view;
 import tunnel.controller.GameController;
 import tunnel.model.Player;
 import tunnel.model.Node;
-// Import main.MainLauncher agar bisa kembali ke menu
 import main.MainLauncher;
 
 import javax.imageio.ImageIO;
@@ -25,7 +24,7 @@ public class GameBoard extends JFrame {
     private JPanel rightPanel;
     private JButton rollDiceButton;
     private JButton newGameButton;
-    private JButton backButton; // Tombol Back baru
+    private JButton backButton;
     private JTextArea gameLogArea;
 
     private Map<String, BufferedImage> loadedImages;
@@ -34,12 +33,10 @@ public class GameBoard extends JFrame {
 
     private SoundManager soundManager;
 
-    // --- KONFIGURASI POSISI GRID (FINAL STATIS) ---
     private static final int GRID_START_X = 155;
     private static final int GRID_START_Y = 137;
     private static final int CELL_STEP_X = 73;
     private static final int CELL_STEP_Y = 75;
-
     private static final int GRID_ROWS = 8;
     private static final int GRID_COLS = 8;
 
@@ -66,6 +63,13 @@ public class GameBoard extends JFrame {
 
         loadResources();
         initComponents();
+
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent e) {
+                soundManager.stopAllBGM();
+            }
+        });
     }
 
     private void loadResources() {
@@ -88,8 +92,7 @@ public class GameBoard extends JFrame {
     private void initComponents() {
         setTitle("Tunnel Escape - Gameplay");
         setSize(1150, 850);
-        // Ubah jadi DISPOSE agar tidak mematikan seluruh aplikasi saat ditutup manual (opsional)
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(false);
 
@@ -131,7 +134,6 @@ public class GameBoard extends JFrame {
         playerListPanel.setOpaque(false);
         updatePlayerListPanel(playerListPanel);
 
-        // Panel Dadu
         JPanel dicePanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -143,24 +145,26 @@ public class GameBoard extends JFrame {
         dicePanel.setMaximumSize(new Dimension(250, 120));
         dicePanel.setOpaque(false);
 
-        // --- PERBAIKAN TOMBOL ---
-        // 1. ROLL DICE
+        // 1. ROLL DICE (TANPA CLICK SOUND karena ada suara kocok)
         rollDiceButton = createStyledButton("ROLL DICE", new Color(230, 126, 34), Color.BLACK);
         rollDiceButton.addActionListener(e -> handleRoll());
 
-        // 2. NEW GAME
+        // 2. NEW GAME (DENGAN CLICK SOUND)
         newGameButton = createStyledButton("NEW GAME", new Color(52, 152, 219), Color.WHITE);
-        newGameButton.addActionListener(e -> handleNewGame());
+        newGameButton.addActionListener(e -> {
+            soundManager.playClick(); // Play Sound
+            handleNewGame();
+        });
 
-        // 3. BACK TO MENU (NEW)
+        // 3. BACK TO MENU (DENGAN CLICK SOUND)
         backButton = createStyledButton("MENU", new Color(192, 57, 43), Color.WHITE);
         backButton.addActionListener(e -> {
-            soundManager.stop("game_bgm");
+            soundManager.playClick(); // Play Sound
+            soundManager.stopAllBGM();
             this.dispose();
             new MainLauncher().setVisible(true);
         });
 
-        // Log Area
         gameLogArea = new JTextArea();
         gameLogArea.setEditable(false);
         gameLogArea.setBackground(new Color(40, 30, 20));
@@ -171,23 +175,20 @@ public class GameBoard extends JFrame {
         scrollLog.setPreferredSize(new Dimension(250, 150));
         scrollLog.setBorder(BorderFactory.createLineBorder(new Color(100, 80, 60)));
 
-        // ADD COMPONENTS TO PANEL
         panel.add(header);
         panel.add(Box.createRigidArea(new Dimension(0, 20)));
         panel.add(playerListPanel);
-        panel.add(Box.createVerticalGlue()); // Push components down
+        panel.add(Box.createVerticalGlue());
         panel.add(dicePanel);
         panel.add(Box.createRigidArea(new Dimension(0, 10)));
 
         panel.add(rollDiceButton);
         panel.add(Box.createRigidArea(new Dimension(0, 10)));
 
-        // Container untuk tombol kecil (New Game & Back) agar sejajar
         JPanel subBtnPanel = new JPanel(new GridLayout(1, 2, 10, 0));
         subBtnPanel.setOpaque(false);
         subBtnPanel.setMaximumSize(new Dimension(250, 45));
 
-        // Sesuaikan font size tombol kecil
         newGameButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
         backButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
 
@@ -201,15 +202,14 @@ public class GameBoard extends JFrame {
         return panel;
     }
 
-    // --- HELPER STYLE TOMBOL (AGAR PASTI KELIHATAN) ---
     private JButton createStyledButton(String text, Color bg, Color fg) {
         JButton btn = new JButton(text);
         btn.setFont(new Font("Segoe UI", Font.BOLD, 20));
         btn.setBackground(bg);
         btn.setForeground(fg);
         btn.setFocusPainted(false);
-        btn.setBorderPainted(false); // Flat style
-        btn.setOpaque(true);         // Wajib true agar warna background muncul
+        btn.setBorderPainted(false);
+        btn.setOpaque(true);
         btn.setAlignmentX(CENTER_ALIGNMENT);
         btn.setMaximumSize(new Dimension(250, 50));
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -217,7 +217,7 @@ public class GameBoard extends JFrame {
     }
 
     private void handleNewGame() {
-        soundManager.stop("game_bgm");
+        soundManager.stopAllBGM();
         gameController.reset();
         this.dispose();
         new IntroScreen(gameController).setVisible(true);
@@ -236,7 +236,6 @@ public class GameBoard extends JFrame {
             nameLbl.setFont(new Font("Segoe UI", Font.BOLD, 14));
             nameLbl.setBorder(new EmptyBorder(0, 10, 0, 0));
 
-            // Visual Status Koin
             JLabel statusLbl = new JLabel("<html><div style='text-align:right'>Pos: " + p.getCurrentPosition() +
                     "<br><font color='#FFD700'>Coins: " + p.getCoins() + "</font></div></html>");
             statusLbl.setForeground(Color.ORANGE);
@@ -269,7 +268,6 @@ public class GameBoard extends JFrame {
         g2.setFont(new Font("Arial", Font.BOLD, 14));
         FontMetrics fm = g2.getFontMetrics();
 
-        // GRID & COIN
         for (int row = 0; row < GRID_ROWS; row++) {
             for (int col = 0; col < GRID_COLS; col++) {
                 int nodeNum;
@@ -299,7 +297,7 @@ public class GameBoard extends JFrame {
                     int coinX = centerX + 12;
                     int coinY = centerY - 12;
 
-                    g2.setColor(Color.BLACK); // Shadow
+                    g2.setColor(Color.BLACK);
                     g2.drawString(coinText, coinX + 1, coinY + 1);
                     g2.drawString(coinText, coinX - 1, coinY - 1);
 
@@ -312,7 +310,6 @@ public class GameBoard extends JFrame {
             }
         }
 
-        // DRAW SHORTCUTS
         Map<Integer, Integer> shortcuts = gameController.getGraph().getShortcuts();
         g2.setStroke(new BasicStroke(3f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
         g2.setColor(new Color(255, 215, 0, 180));
@@ -327,7 +324,6 @@ public class GameBoard extends JFrame {
             }
         }
 
-        // DRAW PLAYERS
         Map<Integer, java.util.List<Player>> mapPos = new HashMap<>();
         for (Player p : gameController.getPlayerQueue()) {
             int drawPos = p.getCurrentPosition();
@@ -641,6 +637,7 @@ public class GameBoard extends JFrame {
         closeBtn.setForeground(Color.WHITE);
         closeBtn.setFocusPainted(false);
         closeBtn.addActionListener(e -> {
+            soundManager.playClick(); // Play Sound
             dialog.dispose();
             handleNewGame();
         });

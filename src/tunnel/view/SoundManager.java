@@ -8,28 +8,27 @@ import java.util.Random;
 
 public class SoundManager {
     private Map<String, Clip> soundMap;
-    private Clip[] stepClips;
     private Random random;
 
-    // KONFIGURASI VOLUME
-    private static final float BGM_VOLUME = 0.25f;
-    private static final float SFX_VOLUME = 0.90f;
+    private static final float BGM_VOLUME = -10.0f;
+    private static final float SFX_VOLUME = -5.0f;
 
     public SoundManager() {
         soundMap = new HashMap<>();
         random = new Random();
 
-        loadSound("intro_bgm", "resources/tunnel/sounds/intro_bgm.wav"); // Musik Intro
-        loadSound("game_bgm", "resources/tunnel/sounds/game_bgm.wav");   // Musik tunnel.Main
+        loadSound("intro_bgm", "resources/tunnel/sounds/intro_bgm.wav");
+        loadSound("game_bgm", "resources/tunnel/sounds/game_bgm.wav");
         loadSound("step", "resources/tunnel/sounds/step.wav");
         loadSound("slide", "resources/tunnel/sounds/slide.wav");
         loadSound("win", "resources/tunnel/sounds/win.wav");
-        loadSound("bonus", "resources/tunnel/sounds/bonus.wav"); // Suara Kelipatan 5
-        loadSound("dash", "resources/tunnel/sounds/dash.wav");   // Suara Shortest Path
+        loadSound("bonus", "resources/tunnel/sounds/bonus.wav");
+        loadSound("dash", "resources/tunnel/sounds/dash.wav");
+        loadSound("point_plus", "resources/tunnel/sounds/coin.wav");
+        loadSound("point_minus", "resources/tunnel/sounds/error.wav");
+        loadSound("roll", "resources/tunnel/sounds/dice_roll.wav");
 
-        loadSound("point_plus", "resources/tunnel/sounds/coin.wav");  // Suara dapat poin
-        loadSound("point_minus", "resources/tunnel/sounds/error.wav");  // Suara kurang poin
-        loadSound("roll", "resources/tunnel/sounds/dice_roll.wav");   // Suara kocok dadu
+        loadSound("click", "resources/maze/sounds/button_click.wav");
     }
 
     private void loadSound(String name, String path) {
@@ -37,25 +36,14 @@ public class SoundManager {
             File file = new File(path);
             if (file.exists()) {
                 AudioInputStream audioIn = AudioSystem.getAudioInputStream(file);
-                AudioFormat baseFormat = audioIn.getFormat();
-                AudioFormat decodedFormat = new AudioFormat(
-                        AudioFormat.Encoding.PCM_SIGNED,
-                        baseFormat.getSampleRate(),
-                        16,
-                        baseFormat.getChannels(),
-                        baseFormat.getChannels() * 2,
-                        baseFormat.getSampleRate(),
-                        false
-                );
-                AudioInputStream decodedAudioIn = AudioSystem.getAudioInputStream(decodedFormat, audioIn);
                 Clip clip = AudioSystem.getClip();
-                clip.open(decodedAudioIn);
+                clip.open(audioIn);
                 soundMap.put(name, clip);
             } else {
-                // System.err.println("Sound missing: " + path); //untuk debug
+                System.err.println("Sound file missing: " + path);
             }
         } catch (Exception e) {
-            // Silent catch
+            e.printStackTrace();
         }
     }
 
@@ -63,10 +51,14 @@ public class SoundManager {
         Clip clip = soundMap.get(name);
         if (clip != null) {
             if (clip.isRunning()) clip.stop();
+            setVolume(clip, SFX_VOLUME);
             clip.setFramePosition(0);
-            setClipVolume(clip, SFX_VOLUME);
             clip.start();
         }
+    }
+
+    public void playClick() {
+        play("click");
     }
 
     public void playStep() {
@@ -77,8 +69,8 @@ public class SoundManager {
         stopAllBGM();
         Clip clip = soundMap.get(name);
         if (clip != null) {
+            setVolume(clip, BGM_VOLUME);
             clip.setFramePosition(0);
-            setClipVolume(clip, BGM_VOLUME);
             clip.loop(Clip.LOOP_CONTINUOUSLY);
             clip.start();
         }
@@ -97,13 +89,11 @@ public class SoundManager {
         stop("win");
     }
 
-    private void setClipVolume(Clip clip, float volume) {
+    private void setVolume(Clip clip, float db) {
         try {
             if (clip.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
-                FloatControl gainControl = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
-                float dB = (float) (Math.log(volume == 0.0 ? 0.0001 : volume) / Math.log(10.0) * 20.0);
-                if (dB < -80.0f) dB = -80.0f;
-                gainControl.setValue(dB);
+                FloatControl gain = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
+                gain.setValue(db);
             }
         } catch (Exception e) {
             // Ignore volume error
