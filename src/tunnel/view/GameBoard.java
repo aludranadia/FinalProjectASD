@@ -222,6 +222,29 @@ public class GameBoard extends JFrame {
         new IntroScreen(gameController).setVisible(true);
     }
 
+    private void handlePlayAgain() {
+        soundManager.stopAllBGM();
+
+        gameController.restartGame();
+
+        isRolling = false;
+        animatingPlayer = null;
+        animationPath = null;
+        currentDiceNumber = 1;
+        currentDiceColor = "WHITE";
+        visualCurrentNode = 1;
+
+        gameLogArea.setText("");
+        updatePlayerListPanel((JPanel) rightPanel.getComponent(2));
+        boardPanel.repaint();
+        rightPanel.repaint();
+
+        rollDiceButton.setEnabled(true);
+        newGameButton.setEnabled(true);
+
+        soundManager.playLoop("game_bgm");
+    }
+
     private void updatePlayerListPanel(JPanel panel) {
         panel.removeAll();
         for (Player p : gameController.getPlayerQueue()) {
@@ -505,8 +528,11 @@ public class GameBoard extends JFrame {
         if (gameController.isGameEnded()) {
             soundManager.stop("game_bgm");
             soundManager.play("win");
-            showLeaderboardDialog();
+
             rollDiceButton.setEnabled(false);
+
+            showLeaderboardDialog();
+
         } else {
             rollDiceButton.setEnabled(true);
 
@@ -516,8 +542,6 @@ public class GameBoard extends JFrame {
 
             if (result.isBonusTurn()) {
                 soundManager.play("bonus");
-
-                // --- POPUP LUCKY SPOT ---
                 JDialog bonusDialog = new JDialog(this, "Lucky Spot!", true);
                 bonusDialog.setUndecorated(true);
                 bonusDialog.setSize(400, 220);
@@ -548,17 +572,15 @@ public class GameBoard extends JFrame {
                 gbc.gridy = 2;
                 gbc.insets = new Insets(20, 10, 10, 10);
 
-                // --- PERBAIKAN VISUALISASI BUTTON LUCKY PATH ---
-                // Menggunakan GOLD_COLOR dan teks HITAM agar kontras
                 JButton btnOK = new JButton("ROLL AGAIN");
                 btnOK.setPreferredSize(new Dimension(150, 40));
-                btnOK.setBackground(GOLD_COLOR);     // Warna Emas
-                btnOK.setForeground(Color.BLACK);    // Teks Hitam
+                btnOK.setBackground(GOLD_COLOR);
+                btnOK.setForeground(Color.BLACK);
                 btnOK.setFont(new Font("Segoe UI", Font.BOLD, 14));
                 btnOK.setFocusPainted(false);
                 btnOK.setBorderPainted(false);
-                btnOK.setOpaque(true);               // Pastikan Opaque true
-                btnOK.setContentAreaFilled(true);    // Pastikan Area terisi warna
+                btnOK.setOpaque(true);
+                btnOK.setContentAreaFilled(true);
                 btnOK.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
                 btnOK.addActionListener(e -> {
@@ -581,14 +603,13 @@ public class GameBoard extends JFrame {
         dialog.setLocationRelativeTo(this);
 
         JPanel mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setBackground(new Color(20, 15, 10)); // Darker Brown
+        mainPanel.setBackground(new Color(20, 15, 10));
 
         mainPanel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(GOLD_COLOR, 2),
                 new EmptyBorder(5, 5, 5, 5)
         ));
 
-        // HEADER
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(new Color(25, 20, 15));
         headerPanel.setBorder(new EmptyBorder(25, 0, 20, 0));
@@ -605,12 +626,10 @@ public class GameBoard extends JFrame {
         headerPanel.add(subtitleLbl, BorderLayout.SOUTH);
         mainPanel.add(headerPanel, BorderLayout.NORTH);
 
-        // TABS
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.setFont(new Font("Segoe UI", Font.BOLD, 14));
         tabbedPane.setUI(new BasicTabbedPaneUI());
 
-        // Tab 1: Current Match
         JPanel currentMatchPanel = createTabContentPanel();
         JLabel rankHeader = new JLabel("FINAL STANDINGS");
         rankHeader.setFont(UI_FONT);
@@ -630,7 +649,6 @@ public class GameBoard extends JFrame {
         }
         tabbedPane.addTab(" Current Match ", createDarkScrollPane(currentMatchPanel));
 
-        // Tab 2: Hall of Fame
         JPanel hofPanel = createTabContentPanel();
         JLabel winTitle = new JLabel("TOP CONQUERORS (Wins)");
         winTitle.setForeground(GOLD_COLOR);
@@ -672,32 +690,46 @@ public class GameBoard extends JFrame {
 
         mainPanel.add(tabbedPane, BorderLayout.CENTER);
 
-        // FOOTER
-        JPanel footerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-        footerPanel.setBackground(new Color(20, 15, 10)); // Samakan dengan mainPanel
+        JPanel footerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 0));
+        footerPanel.setBackground(new Color(20, 15, 10));
         footerPanel.setBorder(new EmptyBorder(15, 0, 20, 0));
 
-        JButton closeBtn = new JButton("CLOSE & RESET");
-        closeBtn.setPreferredSize(new Dimension(200, 50));
-        closeBtn.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        JButton btnNewGame = new JButton("New Game");
+        btnNewGame.setPreferredSize(new Dimension(180, 50));
+        btnNewGame.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        btnNewGame.setBackground(new Color(52, 152, 219));
+        btnNewGame.setForeground(Color.WHITE);
+        btnNewGame.setOpaque(true);
+        btnNewGame.setContentAreaFilled(true);
+        btnNewGame.setBorderPainted(false);
+        btnNewGame.setFocusPainted(false);
+        btnNewGame.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        closeBtn.setBackground(new Color(52, 152, 219)); // Biru Terang
-        closeBtn.setForeground(Color.WHITE);             // Teks Putih
-
-        closeBtn.setOpaque(true);
-        closeBtn.setContentAreaFilled(true);
-        closeBtn.setBorderPainted(false);
-        closeBtn.setFocusPainted(false);
-
-        closeBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
-        closeBtn.addActionListener(e -> {
+        btnNewGame.addActionListener(e -> {
             soundManager.playClick();
             dialog.dispose();
             handleNewGame();
         });
 
-        footerPanel.add(closeBtn);
+        JButton btnPlayAgain = new JButton("Play Again");
+        btnPlayAgain.setPreferredSize(new Dimension(180, 50));
+        btnPlayAgain.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        btnPlayAgain.setBackground(new Color(46, 204, 113));
+        btnPlayAgain.setForeground(Color.WHITE);
+        btnPlayAgain.setOpaque(true);
+        btnPlayAgain.setContentAreaFilled(true);
+        btnPlayAgain.setBorderPainted(false);
+        btnPlayAgain.setFocusPainted(false);
+        btnPlayAgain.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        btnPlayAgain.addActionListener(e -> {
+            soundManager.playClick();
+            dialog.dispose();
+            handlePlayAgain();
+        });
+
+        footerPanel.add(btnNewGame);
+        footerPanel.add(btnPlayAgain);
         mainPanel.add(footerPanel, BorderLayout.SOUTH);
 
         dialog.add(mainPanel);
@@ -707,7 +739,7 @@ public class GameBoard extends JFrame {
     private JPanel createTabContentPanel() {
         JPanel p = new JPanel();
         p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
-        p.setBackground(new Color(30, 25, 20)); // Coklat gelap
+        p.setBackground(new Color(30, 25, 20));
         p.setBorder(new EmptyBorder(15, 15, 15, 15));
         return p;
     }

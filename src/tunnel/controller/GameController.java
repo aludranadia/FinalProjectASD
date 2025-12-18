@@ -11,8 +11,8 @@ public class GameController {
     private boolean gameStarted;
     private boolean gameEnded;
 
-    private Map<String, Integer> globalWinCounts;   // Menyimpan jumlah kemenangan (Top Win)
-    private Map<String, Integer> globalHighScores;  // Menyimpan skor tertinggi (Top Score)
+    private Map<String, Integer> globalWinCounts;
+    private Map<String, Integer> globalHighScores;
 
     public GameController() {
         this.graph = new Graph();
@@ -31,6 +31,20 @@ public class GameController {
         this.gameStarted = false;
         this.gameEnded = false;
         this.graph = new Graph();
+    }
+
+    public void restartGame() {
+        List<String> names = new ArrayList<>();
+        List<String> images = new ArrayList<>();
+
+        for (Player p : playerQueue) {
+            names.add(p.getName());
+            images.add(p.getImagePath());
+        }
+
+        reset();
+        initializeCustomPlayers(names, images);
+        startGame();
     }
 
     public void initializeCustomPlayers(List<String> names, List<String> imagePaths) {
@@ -102,7 +116,11 @@ public class GameController {
         int coinEffect = 0;
         if (finalNode != null) {
             coinEffect = finalNode.getCoinValue();
-            currentPlayer.addCoins(coinEffect); // Collect Bonus Point
+            currentPlayer.addCoins(coinEffect);
+
+            if (coinEffect != 0) {
+                finalNode.setCoinValue(0);
+            }
         }
 
         if (currentPlayer.hasWon()) {
@@ -152,7 +170,6 @@ public class GameController {
         }
     }
 
-    // --- LEADERBOARD ---
     public PriorityQueue<Player> getScoreLeaderboard() {
         PriorityQueue<Player> pq = new PriorityQueue<>();
         pq.addAll(playerQueue);
@@ -186,7 +203,7 @@ public class GameController {
         private boolean usedShortcut;
         private List<Integer> movementPath;
         private boolean bonusTurn;
-        private int coinEffect; // Tambahan: Efek koin
+        private int coinEffect;
 
         public TurnResult(Player player, Dice.DiceResult diceResult, Food food,
                           int oldPosition, int newPosition, int stepsMoved,
