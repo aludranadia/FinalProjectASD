@@ -8,22 +8,21 @@ import main.MainLauncher;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.Path2D;
 import java.util.ArrayList;
 import java.util.List;
 
 public class MazePanel extends JPanel {
-    private static final int CELL_SIZE = 25;
+    private static final int CELL_SIZE = 28;
 
-    // --- UPDATE: PALET WARNA KONTRAS UNTUK JALUR BERBEDA ---
-    // Menggunakan warna-warna terang yang berseberangan di roda warna agar sangat berbeda.
+    // Palet warna jalur solusi (tetap terang agar kontras dengan background gelap)
     private static final Color[] PATH_COLORS = {
-            new Color(255, 0, 0, 180),      // Merah Murni (Red)
-            new Color(0, 255, 255, 180),    // Cyan Terang (Cyan)
-            new Color(255, 255, 0, 180),    // Kuning Terang (Yellow)
-            new Color(255, 0, 255, 180),    // Magenta Terang (Magenta)
-            new Color(50, 255, 50, 180),    // Hijau Neon (Lime Green)
-            new Color(255, 140, 0, 180),    // Oranye Dalam (Deep Orange)
-            new Color(30, 144, 255, 180)    // Biru Langit (Dodger Blue)
+            new Color(255, 50, 50),    // Merah Terang
+            new Color(0, 255, 255),    // Cyan
+            new Color(255, 255, 0),    // Kuning
+            new Color(255, 0, 255),    // Magenta
+            new Color(50, 255, 100),   // Hijau Neon
+            new Color(255, 165, 0)     // Oranye
     };
 
     private MazeGraph mazeGraph;
@@ -39,12 +38,11 @@ public class MazePanel extends JPanel {
 
     public MazePanel() {
         this.setLayout(new BorderLayout());
+        this.setBackground(Color.BLACK); // Background Panel Hitam Pekat
         this.solver = new MazeSolver();
 
-        // Generate Maze Awal
         generateNewMaze(21, 35);
 
-        // Panel Kontrol
         JPanel controlPanel = createControlPanel();
         this.add(controlPanel, BorderLayout.SOUTH);
     }
@@ -68,36 +66,16 @@ public class MazePanel extends JPanel {
         panel.setBackground(new Color(30, 30, 30));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // Baris 1: Algoritma
-        JPanel algoPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+        JPanel algoPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 0));
         algoPanel.setOpaque(false);
 
-        JButton btnBFS = createStyledButton("BFS", new Color(52, 152, 219));
-        btnBFS.addActionListener(e -> runSolver("BFS"));
+        algoPanel.add(createAlgoButton("BFS", new Color(52, 152, 219)));
+        algoPanel.add(createAlgoButton("DFS", new Color(155, 89, 182)));
+        algoPanel.add(createAlgoButton("Dijkstra", new Color(46, 204, 113)));
+        algoPanel.add(createAlgoButton("A* (Smart)", new Color(241, 196, 15)));
+        algoPanel.add(createAlgoButton("Prim", new Color(155, 89, 182)));
+        algoPanel.add(createAlgoButton("Kruskal", new Color(231, 76, 60)));
 
-        JButton btnDFS = createStyledButton("DFS", new Color(155, 89, 182));
-        btnDFS.addActionListener(e -> runSolver("DFS"));
-
-        JButton btnDijkstra = createStyledButton("Dijkstra", new Color(46, 204, 113));
-        btnDijkstra.addActionListener(e -> runSolver("Dijkstra"));
-
-        JButton btnAStar = createStyledButton("A* (Smart)", new Color(241, 196, 15));
-        btnAStar.addActionListener(e -> runSolver("A*"));
-
-        JButton btnPrim = createStyledButton("Prim", new Color(155, 89, 182)); // Ungu
-        btnPrim.addActionListener(e -> runSolver("Prim"));
-
-        JButton btnKruskal = createStyledButton("Kruskal", new Color(231, 76, 60)); // Merah
-        btnKruskal.addActionListener(e -> runSolver("Kruskal"));
-
-        algoPanel.add(btnBFS);
-        algoPanel.add(btnDFS);
-        algoPanel.add(btnDijkstra);
-        algoPanel.add(btnAStar);
-        algoPanel.add(btnPrim);
-        algoPanel.add(btnKruskal);
-
-        // Baris 2: Generate & Back
         JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
         actionPanel.setOpaque(false);
 
@@ -107,9 +85,7 @@ public class MazePanel extends JPanel {
         JButton btnBack = createStyledButton("Back to Menu", new Color(192, 57, 43));
         btnBack.addActionListener(e -> {
             Window window = SwingUtilities.getWindowAncestor(this);
-            if (window != null) {
-                window.dispose();
-            }
+            if (window != null) window.dispose();
             new MainLauncher().setVisible(true);
         });
 
@@ -120,6 +96,13 @@ public class MazePanel extends JPanel {
         panel.add(actionPanel);
 
         return panel;
+    }
+
+    private JButton createAlgoButton(String text, Color bg) {
+        JButton btn = createStyledButton(text, bg);
+        btn.addActionListener(e -> runSolver(text.split(" ")[0]));
+        btn.setPreferredSize(new Dimension(100, 35));
+        return btn;
     }
 
     private void runSolver(String type) {
@@ -145,7 +128,7 @@ public class MazePanel extends JPanel {
             final List<Cell> order = result.getVisitedOrder();
             final List<List<Cell>> paths = result.getPaths();
 
-            timer = new Timer(10, e -> {
+            timer = new Timer(15, e -> {
                 if (isScanning) {
                     for (int i = 0; i < 5; i++) {
                         if (animationIndex < order.size()) {
@@ -159,11 +142,9 @@ public class MazePanel extends JPanel {
                             break;
                         }
                     }
-                }
-                else if (isPathing) {
+                } else if (isPathing) {
                     ((Timer)e.getSource()).stop();
                 }
-
                 repaint();
             });
             timer.start();
@@ -176,10 +157,6 @@ public class MazePanel extends JPanel {
         Graphics2D g2 = (Graphics2D) g;
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        // Background Gelap
-        g2.setColor(new Color(20, 20, 20));
-        g2.fillRect(0, 0, getWidth(), getHeight());
-
         if (mazeGraph == null) return;
 
         int totalW = mazeGraph.getCols() * CELL_SIZE;
@@ -187,71 +164,121 @@ public class MazePanel extends JPanel {
         int startX = (getWidth() - totalW) / 2;
         int startY = (getHeight() - totalH) / 2;
 
-        // 1. Grid Dasar
+        // 1. GAMBAR GRID (WALL & TERRACE)
         Cell[][] grid = mazeGraph.getGrid();
         for (int r = 0; r < mazeGraph.getRows(); r++) {
             for (int c = 0; c < mazeGraph.getCols(); c++) {
                 Cell cell = grid[r][c];
                 int x = startX + (c * CELL_SIZE);
                 int y = startY + (r * CELL_SIZE);
-
-                g2.setColor(cell.getType().getColor());
-                g2.fillRect(x, y, CELL_SIZE, CELL_SIZE);
-
-                g2.setColor(new Color(0,0,0, 50));
-                g2.drawRect(x, y, CELL_SIZE, CELL_SIZE);
+                drawCustomCell(g2, cell, x, y);
             }
         }
 
-        // 2. Animasi Scanning
-        g2.setColor(new Color(0, 255, 255, 80)); // Cyan lebih transparan
+        // 2. ANIMASI SCANNING (ABU-ABU TRANSPARAN)
+        // Warna: Abu-abu medium (120, 120, 120) dengan transparansi (150)
+        // Ini akan membuat terrace abu-abu tua menjadi lebih terang sedikit tapi tetap bernuansa abu
+        g2.setColor(new Color(150, 150, 150, 120));
         for (Cell cell : visitedAnimation) {
             if (cell.getType() != CellType.WALL) {
                 int x = startX + (cell.getCol() * CELL_SIZE);
                 int y = startY + (cell.getRow() * CELL_SIZE);
+
+                // Gambar kotak penuh
                 g2.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+
+                // Border tipis agar terlihat progressnya
+                g2.setColor(new Color(200, 200, 200, 50));
+                g2.drawRect(x, y, CELL_SIZE, CELL_SIZE);
+
+                // Kembalikan warna fill
+                g2.setColor(new Color(150, 150, 150, 120));
             }
         }
 
-        // 3. Gambar SEMUA Jalur Solusi (Multiple Paths dengan Warna Beda)
-        if (isPathing && allSolutionPaths != null) {
-            g2.setStroke(new BasicStroke(4)); // Garis sedikit lebih tebal
-
+        // 3. GAMBAR JALUR SOLUSI
+        if (isPathing && allSolutionPaths != null && !allSolutionPaths.isEmpty()) {
             int colorIndex = 0;
             for (List<Cell> path : allSolutionPaths) {
-                // Ambil warna secara bergantian dari Palette yang baru
-                g2.setColor(PATH_COLORS[colorIndex % PATH_COLORS.length]);
+                if (path.size() < 2) continue;
+                Color pathColor = PATH_COLORS[colorIndex % PATH_COLORS.length];
+                drawPathLine(g2, path, startX, startY, pathColor);
                 colorIndex++;
-
-                for (int i = 0; i < path.size() - 1; i++) {
-                    Cell curr = path.get(i);
-                    Cell next = path.get(i+1);
-
-                    int x1 = startX + (curr.getCol() * CELL_SIZE) + CELL_SIZE/2;
-                    int y1 = startY + (curr.getRow() * CELL_SIZE) + CELL_SIZE/2;
-                    int x2 = startX + (next.getCol() * CELL_SIZE) + CELL_SIZE/2;
-                    int y2 = startY + (next.getRow() * CELL_SIZE) + CELL_SIZE/2;
-
-                    g2.drawLine(x1, y1, x2, y2);
-                }
             }
         }
 
         // 4. Marker Start & End
-        drawMarker(g2, mazeGraph.getStart(), Color.GREEN, "S", startX, startY);
-        drawMarker(g2, mazeGraph.getEnd(), Color.MAGENTA, "E", startX, startY);
+        drawStyledMarker(g2, mazeGraph.getStart(), new Color(46, 204, 113), "S", startX, startY);
+        drawStyledMarker(g2, mazeGraph.getEnd(), new Color(155, 89, 182), "E", startX, startY);
     }
 
-    private void drawMarker(Graphics2D g2, Cell cell, Color color, String text, int dx, int dy) {
+    // --- VISUALISASI CUSTOM ---
+
+    private void drawCustomCell(Graphics2D g2, Cell cell, int x, int y) {
+        if (cell.getType() == CellType.WALL) {
+            // WALL: Hitam Polos, Tanpa Border -> Menyatu
+            g2.setColor(Color.BLACK);
+            g2.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+            // Tidak ada drawRect di sini agar tembok menyatu
+        } else if (cell.getType() == CellType.TERRACE) {
+            // TERRACE: Abu-abu Tua
+            g2.setColor(new Color(60, 60, 60));
+            g2.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+
+            // Border sangat tipis dan gelap agar grid tetap terlihat samar-samar
+            g2.setColor(new Color(40, 40, 40));
+            g2.drawRect(x, y, CELL_SIZE, CELL_SIZE);
+        } else {
+            // Tipe Lain (Water, Mud, Grass) - Gunakan warna aslinya
+            g2.setColor(cell.getType().getColor());
+            g2.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+
+            g2.setColor(new Color(0, 0, 0, 50));
+            g2.drawRect(x, y, CELL_SIZE, CELL_SIZE);
+        }
+    }
+
+    private void drawPathLine(Graphics2D g2, List<Cell> path, int startX, int startY, Color color) {
+        Path2D polyline = new Path2D.Float();
+        Cell first = path.get(0);
+        polyline.moveTo(startX + first.getCol() * CELL_SIZE + CELL_SIZE / 2.0, startY + first.getRow() * CELL_SIZE + CELL_SIZE / 2.0);
+
+        for (int i = 1; i < path.size(); i++) {
+            Cell next = path.get(i);
+            polyline.lineTo(startX + next.getCol() * CELL_SIZE + CELL_SIZE / 2.0, startY + next.getRow() * CELL_SIZE + CELL_SIZE / 2.0);
+        }
+
+        // Glow Effect di bawah garis
+        g2.setStroke(new BasicStroke(8f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        g2.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), 100)); // Glow warna sama tapi transparan
+        g2.draw(polyline);
+
+        // Garis Utama
+        g2.setStroke(new BasicStroke(4f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        g2.setColor(color);
+        g2.draw(polyline);
+    }
+
+    private void drawStyledMarker(Graphics2D g2, Cell cell, Color bg, String text, int dx, int dy) {
         if (cell == null) return;
         int x = dx + (cell.getCol() * CELL_SIZE);
         int y = dy + (cell.getRow() * CELL_SIZE);
+        int offset = 4;
+        int size = CELL_SIZE - offset * 2;
 
-        g2.setColor(color);
-        g2.fillOval(x + 4, y + 4, CELL_SIZE - 8, CELL_SIZE - 8);
-        g2.setColor(Color.BLACK);
+        g2.setColor(bg);
+        g2.fillOval(x + offset, y + offset, size, size);
+
+        g2.setColor(Color.WHITE);
+        g2.setStroke(new BasicStroke(2));
+        g2.drawOval(x + offset, y + offset, size, size);
+
+        g2.setColor(Color.WHITE);
         g2.setFont(new Font("Arial", Font.BOLD, 12));
-        g2.drawString(text, x + 8, y + 17);
+        FontMetrics fm = g2.getFontMetrics();
+        int txtW = fm.stringWidth(text);
+        int txtH = fm.getAscent() - fm.getDescent();
+        g2.drawString(text, x + CELL_SIZE / 2 - txtW / 2, y + CELL_SIZE / 2 + txtH / 2 + 1);
     }
 
     private JButton createStyledButton(String text, Color bg) {
@@ -263,7 +290,11 @@ public class MazePanel extends JPanel {
         btn.setOpaque(true);
         btn.setFont(new Font("Segoe UI", Font.BOLD, 12));
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btn.setPreferredSize(new Dimension(140, 35));
+        btn.setPreferredSize(new Dimension(130, 35));
+        btn.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) { btn.setBackground(bg.brighter()); }
+            public void mouseExited(java.awt.event.MouseEvent evt) { btn.setBackground(bg); }
+        });
         return btn;
     }
 }
