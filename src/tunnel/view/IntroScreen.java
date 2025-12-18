@@ -37,7 +37,7 @@ public class IntroScreen extends JFrame {
     public IntroScreen(GameController gameController) {
         this.gameController = gameController;
 
-        // 1. Init Sound & Play Intro BGM
+        // 1. Init Sound (PENTING: Harus sebelum load komponen lain)
         this.soundManager = new SoundManager();
         this.soundManager.playLoop("intro_bgm");
 
@@ -45,13 +45,11 @@ public class IntroScreen extends JFrame {
         initComponents();
         startPulseAnimation();
 
-        // 2. Stop music on window close
+        // Matikan musik saat window ditutup
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosed(WindowEvent e) {
-                if (soundManager != null) {
-                    soundManager.stopAllBGM();
-                }
+                if (soundManager != null) soundManager.stopAllBGM();
             }
         });
     }
@@ -69,9 +67,12 @@ public class IntroScreen extends JFrame {
 
     private void initComponents() {
         setTitle("Tunnel Escape - The Journey");
-        setSize(1000, 700);
-        setExtendedState(JFrame.MAXIMIZED_BOTH); // Full Screen
-        setResizable(true);
+
+        // --- UKURAN DISAMAKAN DENGAN GAMEPLAY ---
+        setSize(1150, 850);
+        setResizable(false);
+        // ----------------------------------------
+
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
@@ -114,18 +115,14 @@ public class IntroScreen extends JFrame {
         gbc.insets = new Insets(10, 0, 20, 0);
         mainPanel.add(titleLabel, gbc);
 
-        // --- DESCRIPTION (VISUAL FIX: KOTAK HITAM KEMBALI) ---
+        // --- DESCRIPTION BOX ---
         JPanel glassPanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2d = (Graphics2D) g;
                 g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-                // Background Hitam Transparan
                 g2d.setColor(new Color(0, 0, 0, 240));
                 g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 30, 30);
-
-                // Border Emas
                 g2d.setColor(new Color(255, 215, 0, 150));
                 g2d.setStroke(new BasicStroke(2));
                 g2d.drawRoundRect(0, 0, getWidth()-1, getHeight()-1, 30, 30);
@@ -134,7 +131,7 @@ public class IntroScreen extends JFrame {
         glassPanel.setLayout(new BoxLayout(glassPanel, BoxLayout.Y_AXIS));
         glassPanel.setPreferredSize(new Dimension(650, 260));
         glassPanel.setBorder(new EmptyBorder(25, 30, 25, 30));
-        glassPanel.setOpaque(false); // Penting agar paintComponent custom terlihat
+        glassPanel.setOpaque(false);
 
         String fontStyle = "font-family: 'Segoe UI Emoji', 'Segoe UI', sans-serif;";
         String descText = "<html><div style='text-align: center; " + fontStyle + "'>" +
@@ -158,12 +155,12 @@ public class IntroScreen extends JFrame {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 0));
         buttonPanel.setOpaque(false);
 
-        // Start Button
+        // START BUTTON (Use helper)
         JButton playButton = createStyledButton("START ADVENTURE", new Color(255, 215, 0), new Color(40, 20, 0));
         playButton.setPreferredSize(new Dimension(280, 60));
         playButton.addActionListener(e -> showPlayerCountDialog());
 
-        // Back Button
+        // BACK BUTTON (Use helper)
         JButton backButton = createStyledButton("BACK TO MENU", new Color(192, 57, 43), Color.WHITE);
         backButton.setPreferredSize(new Dimension(200, 60));
         backButton.addActionListener(e -> {
@@ -182,7 +179,7 @@ public class IntroScreen extends JFrame {
         add(mainPanel);
     }
 
-    // --- HELPER BUTTON DENGAN SOUND CLICK ---
+    // --- HELPER UNTUK BUTTON DENGAN SUARA ---
     private JButton createStyledButton(String text, Color bg, Color fg) {
         JButton btn = new JButton(text);
         btn.setFont(new Font("Segoe UI", Font.BOLD, 20));
@@ -193,9 +190,11 @@ public class IntroScreen extends JFrame {
         btn.setOpaque(true);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        // Tambahkan efek klik otomatis (PENTING: Listener ini akan dijalankan SEBELUM listener lain)
+        // OTOMATIS TAMBAH SUARA KLIK
         btn.addActionListener(e -> {
-            if (soundManager != null) soundManager.playClick();
+            if (soundManager != null) {
+                soundManager.playClick();
+            }
         });
 
         return btn;
@@ -214,7 +213,7 @@ public class IntroScreen extends JFrame {
         }).start();
     }
 
-    // --- DIALOG 1: JUMLAH PEMAIN ---
+    // --- DIALOG 1: PILIH JUMLAH PEMAIN ---
     private void showPlayerCountDialog() {
         JDialog dialog = new JDialog(this, "Setup", true);
         dialog.setUndecorated(true);
@@ -246,15 +245,14 @@ public class IntroScreen extends JFrame {
         }
         spinner.setBorder(null);
 
-        // Next Button (FIX: Pake createStyledButton agar ada suaranya)
+        // NEXT BUTTON (Use helper)
         JButton btn = createStyledButton("NEXT", new Color(230, 126, 34), new Color(40,20,0));
         btn.setFont(new Font("Segoe UI", Font.BOLD, 18));
         btn.setMaximumSize(new Dimension(200, 50));
         btn.setAlignmentX(CENTER_ALIGNMENT);
 
         btn.addActionListener(e -> {
-            // TIDAK PERLU PANGGIL soundManager.playClick() DISINI LAGI
-            // KARENA SUDAH ADA DI createStyledButton
+            // TIDAK PERLU PANGGIL playClick LAGI KARENA SUDAH ADA DI HELPER
             int count = (int) spinner.getValue();
             dialog.dispose();
             showPlayerDetailsDialog(count);
@@ -270,7 +268,7 @@ public class IntroScreen extends JFrame {
         dialog.setVisible(true);
     }
 
-    // --- DIALOG 2: CUSTOMIZE HEROES ---
+    // --- DIALOG 2: CUSTOMIZE PLAYERS ---
     private void showPlayerDetailsDialog(int playerCount) {
         JDialog dialog = new JDialog(this, "Customize", true);
         dialog.setSize(600, 650);
@@ -304,7 +302,6 @@ public class IntroScreen extends JFrame {
             numLabel.setForeground(new Color(230, 126, 34));
 
             JLabel nameLbl = new JLabel("Name:");
-            // VISUAL FIX: Warna teks Light Gray
             nameLbl.setForeground(Color.LIGHT_GRAY);
 
             JTextField nameField = new JTextField("Player " + (i + 1), 10);
@@ -339,7 +336,7 @@ public class IntroScreen extends JFrame {
         footer.setBackground(new Color(30, 25, 20));
         footer.setBorder(new EmptyBorder(20, 0, 20, 0));
 
-        // Tombol BACK (FIX: Pake createStyledButton agar ada suaranya)
+        // BACK BUTTON (Use helper)
         JButton backBtn = createStyledButton("BACK", Color.GRAY, Color.WHITE);
         backBtn.setFont(new Font("Segoe UI", Font.BOLD, 18));
         backBtn.setPreferredSize(new Dimension(120, 50));
@@ -348,12 +345,12 @@ public class IntroScreen extends JFrame {
             showPlayerCountDialog();
         });
 
-        // Tombol START (FIX: Pake createStyledButton agar ada suaranya)
+        // START BUTTON (Use helper)
         JButton startBtn = createStyledButton("START ADVENTURE!", new Color(46, 204, 113), Color.WHITE);
         startBtn.setFont(new Font("Segoe UI", Font.BOLD, 18));
         startBtn.setPreferredSize(new Dimension(250, 50));
         startBtn.addActionListener(e -> {
-            soundManager.stopAllBGM(); // Matikan intro BGM sebelum main
+            soundManager.stopAllBGM();
             List<String> names = new ArrayList<>();
             List<String> images = new ArrayList<>();
             for (int i = 0; i < playerCount; i++) {
@@ -364,7 +361,6 @@ public class IntroScreen extends JFrame {
             gameController.initializeCustomPlayers(names, images);
             gameController.startGame();
 
-            // Masuk ke GameBoard
             new GameBoard(gameController).setVisible(true);
 
             dialog.dispose();

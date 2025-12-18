@@ -10,13 +10,16 @@ public class SoundManager {
     private Map<String, Clip> soundMap;
     private Random random;
 
-    private static final float BGM_VOLUME = -10.0f;
-    private static final float SFX_VOLUME = -5.0f;
+    // KONFIGURASI VOLUME
+    // BGM agak pelan, SFX normal (0.0f = Volume Penuh)
+    private static final float BGM_VOLUME = -15.0f;
+    private static final float SFX_VOLUME = 0.0f;
 
     public SoundManager() {
         soundMap = new HashMap<>();
         random = new Random();
 
+        // Load Sounds - Tunnel Resources
         loadSound("intro_bgm", "resources/tunnel/sounds/intro_bgm.wav");
         loadSound("game_bgm", "resources/tunnel/sounds/game_bgm.wav");
         loadSound("step", "resources/tunnel/sounds/step.wav");
@@ -28,6 +31,8 @@ public class SoundManager {
         loadSound("point_minus", "resources/tunnel/sounds/error.wav");
         loadSound("roll", "resources/tunnel/sounds/dice_roll.wav");
 
+        // Load Sounds - Maze Resources (Button Click)
+        // SESUAI REQUEST: Path button click
         loadSound("click", "resources/maze/sounds/button_click.wav");
     }
 
@@ -40,7 +45,7 @@ public class SoundManager {
                 clip.open(audioIn);
                 soundMap.put(name, clip);
             } else {
-                System.err.println("Sound file missing: " + path);
+                System.err.println("Sound missing: " + path);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -51,8 +56,8 @@ public class SoundManager {
         Clip clip = soundMap.get(name);
         if (clip != null) {
             if (clip.isRunning()) clip.stop();
-            setVolume(clip, SFX_VOLUME);
             clip.setFramePosition(0);
+            setClipVolume(clip, SFX_VOLUME);
             clip.start();
         }
     }
@@ -69,8 +74,8 @@ public class SoundManager {
         stopAllBGM();
         Clip clip = soundMap.get(name);
         if (clip != null) {
-            setVolume(clip, BGM_VOLUME);
             clip.setFramePosition(0);
+            setClipVolume(clip, BGM_VOLUME);
             clip.loop(Clip.LOOP_CONTINUOUSLY);
             clip.start();
         }
@@ -89,11 +94,11 @@ public class SoundManager {
         stop("win");
     }
 
-    private void setVolume(Clip clip, float db) {
+    private void setClipVolume(Clip clip, float decibels) {
         try {
             if (clip.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
-                FloatControl gain = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
-                gain.setValue(db);
+                FloatControl gainControl = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
+                gainControl.setValue(decibels);
             }
         } catch (Exception e) {
             // Ignore volume error
