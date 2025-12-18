@@ -4,7 +4,7 @@ import maze.controller.MazeSolver;
 import maze.model.Cell;
 import maze.model.CellType;
 import maze.model.MazeGraph;
-import main.MainLauncher; // Import Main Launcher
+import main.MainLauncher;
 
 import javax.swing.*;
 import java.awt.*;
@@ -13,12 +13,25 @@ import java.util.List;
 
 public class MazePanel extends JPanel {
     private static final int CELL_SIZE = 25;
+
+    // --- UPDATE: PALET WARNA KONTRAS UNTUK JALUR BERBEDA ---
+    // Menggunakan warna-warna terang yang berseberangan di roda warna agar sangat berbeda.
+    private static final Color[] PATH_COLORS = {
+            new Color(255, 0, 0, 180),      // Merah Murni (Red)
+            new Color(0, 255, 255, 180),    // Cyan Terang (Cyan)
+            new Color(255, 255, 0, 180),    // Kuning Terang (Yellow)
+            new Color(255, 0, 255, 180),    // Magenta Terang (Magenta)
+            new Color(50, 255, 50, 180),    // Hijau Neon (Lime Green)
+            new Color(255, 140, 0, 180),    // Oranye Dalam (Deep Orange)
+            new Color(30, 144, 255, 180)    // Biru Langit (Dodger Blue)
+    };
+
     private MazeGraph mazeGraph;
     private final MazeSolver solver;
 
-    // Data Animasi
     private List<Cell> visitedAnimation;
-    private List<Cell> pathSolution;
+    private List<List<Cell>> allSolutionPaths;
+
     private int animationIndex = 0;
     private Timer timer;
     private boolean isScanning = false;
@@ -31,7 +44,7 @@ public class MazePanel extends JPanel {
         // Generate Maze Awal
         generateNewMaze(21, 35);
 
-        // Panel Kontrol (Tombol)
+        // Panel Kontrol
         JPanel controlPanel = createControlPanel();
         this.add(controlPanel, BorderLayout.SOUTH);
     }
@@ -39,17 +52,18 @@ public class MazePanel extends JPanel {
     private void generateNewMaze(int rows, int cols) {
         if (timer != null && timer.isRunning()) timer.stop();
         visitedAnimation = new ArrayList<>();
-        pathSolution = new ArrayList<>();
+        allSolutionPaths = new ArrayList<>();
         isScanning = false;
         isPathing = false;
+
         mazeGraph = new MazeGraph(rows, cols);
         mazeGraph.generateMaze();
+
         repaint();
     }
 
     private JPanel createControlPanel() {
         JPanel panel = new JPanel();
-        // Menggunakan GridLayout agar tombol rapi dan tidak terpotong
         panel.setLayout(new GridLayout(2, 1, 5, 5));
         panel.setBackground(new Color(30, 30, 30));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -84,12 +98,10 @@ public class MazePanel extends JPanel {
 
         JButton btnBack = createStyledButton("Back to Menu", new Color(192, 57, 43));
         btnBack.addActionListener(e -> {
-            // Tutup Window saat ini
             Window window = SwingUtilities.getWindowAncestor(this);
             if (window != null) {
                 window.dispose();
             }
-            // Buka Main Menu
             new MainLauncher().setVisible(true);
         });
 
@@ -104,8 +116,9 @@ public class MazePanel extends JPanel {
 
     private void runSolver(String type) {
         if (timer != null && timer.isRunning()) return;
+
         visitedAnimation.clear();
-        pathSolution.clear();
+        allSolutionPaths.clear();
         isScanning = true;
         isPathing = false;
         animationIndex = 0;
@@ -120,9 +133,9 @@ public class MazePanel extends JPanel {
 
         if (result != null) {
             final List<Cell> order = result.getVisitedOrder();
-            final List<Cell> path = result.getPath();
+            final List<List<Cell>> paths = result.getPaths();
 
-            timer = new Timer(15, e -> {
+            timer = new Timer(10, e -> {
                 if (isScanning) {
                     for (int i = 0; i < 5; i++) {
                         if (animationIndex < order.size()) {
@@ -132,13 +145,15 @@ public class MazePanel extends JPanel {
                             isScanning = false;
                             isPathing = true;
                             animationIndex = 0;
-                            pathSolution = path;
+                            allSolutionPaths = paths;
                             break;
                         }
                     }
-                } else if (isPathing) {
+                }
+                else if (isPathing) {
                     ((Timer)e.getSource()).stop();
                 }
+
                 repaint();
             });
             timer.start();
@@ -172,13 +187,14 @@ public class MazePanel extends JPanel {
 
                 g2.setColor(cell.getType().getColor());
                 g2.fillRect(x, y, CELL_SIZE, CELL_SIZE);
+
                 g2.setColor(new Color(0,0,0, 50));
                 g2.drawRect(x, y, CELL_SIZE, CELL_SIZE);
             }
         }
 
         // 2. Animasi Scanning
-        g2.setColor(new Color(0, 255, 255, 120));
+        g2.setColor(new Color(0, 255, 255, 80)); // Cyan lebih transparan
         for (Cell cell : visitedAnimation) {
             if (cell.getType() != CellType.WALL) {
                 int x = startX + (cell.getCol() * CELL_SIZE);
@@ -187,22 +203,31 @@ public class MazePanel extends JPanel {
             }
         }
 
-        // 3. Jalur Solusi
-        if (isPathing && pathSolution != null) {
-            g2.setStroke(new BasicStroke(3));
-            g2.setColor(Color.RED);
-            for (int i = 0; i < pathSolution.size() - 1; i++) {
-                Cell curr = pathSolution.get(i);
-                Cell next = pathSolution.get(i+1);
-                int x1 = startX + (curr.getCol() * CELL_SIZE) + CELL_SIZE/2;
-                int y1 = startY + (curr.getRow() * CELL_SIZE) + CELL_SIZE/2;
-                int x2 = startX + (next.getCol() * CELL_SIZE) + CELL_SIZE/2;
-                int y2 = startY + (next.getRow() * CELL_SIZE) + CELL_SIZE/2;
-                g2.drawLine(x1, y1, x2, y2);
+        // 3. Gambar SEMUA Jalur Solusi (Multiple Paths dengan Warna Beda)
+        if (isPathing && allSolutionPaths != null) {
+            g2.setStroke(new BasicStroke(4)); // Garis sedikit lebih tebal
+
+            int colorIndex = 0;
+            for (List<Cell> path : allSolutionPaths) {
+                // Ambil warna secara bergantian dari Palette yang baru
+                g2.setColor(PATH_COLORS[colorIndex % PATH_COLORS.length]);
+                colorIndex++;
+
+                for (int i = 0; i < path.size() - 1; i++) {
+                    Cell curr = path.get(i);
+                    Cell next = path.get(i+1);
+
+                    int x1 = startX + (curr.getCol() * CELL_SIZE) + CELL_SIZE/2;
+                    int y1 = startY + (curr.getRow() * CELL_SIZE) + CELL_SIZE/2;
+                    int x2 = startX + (next.getCol() * CELL_SIZE) + CELL_SIZE/2;
+                    int y2 = startY + (next.getRow() * CELL_SIZE) + CELL_SIZE/2;
+
+                    g2.drawLine(x1, y1, x2, y2);
+                }
             }
         }
 
-        // 4. Start & End
+        // 4. Marker Start & End
         drawMarker(g2, mazeGraph.getStart(), Color.GREEN, "S", startX, startY);
         drawMarker(g2, mazeGraph.getEnd(), Color.MAGENTA, "E", startX, startY);
     }
@@ -211,6 +236,7 @@ public class MazePanel extends JPanel {
         if (cell == null) return;
         int x = dx + (cell.getCol() * CELL_SIZE);
         int y = dy + (cell.getRow() * CELL_SIZE);
+
         g2.setColor(color);
         g2.fillOval(x + 4, y + 4, CELL_SIZE - 8, CELL_SIZE - 8);
         g2.setColor(Color.BLACK);
@@ -221,13 +247,13 @@ public class MazePanel extends JPanel {
     private JButton createStyledButton(String text, Color bg) {
         JButton btn = new JButton(text);
         btn.setBackground(bg);
-        btn.setForeground(Color.WHITE); // Teks Putih
+        btn.setForeground(Color.WHITE);
         btn.setFocusPainted(false);
-        btn.setBorderPainted(false);    // Hilangkan border 3D default
-        btn.setOpaque(true);            // Pastikan warna background muncul
+        btn.setBorderPainted(false);
+        btn.setOpaque(true);
         btn.setFont(new Font("Segoe UI", Font.BOLD, 12));
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btn.setPreferredSize(new Dimension(140, 35)); // Ukuran fix agar seragam
+        btn.setPreferredSize(new Dimension(140, 35));
         return btn;
     }
 }

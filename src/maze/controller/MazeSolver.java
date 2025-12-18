@@ -6,24 +6,22 @@ import java.util.*;
 
 public class MazeSolver {
 
-    // Class pembungkus hasil agar bisa dikirim ke View (Animasi + Jalur Akhir)
     public static class SolverResult {
-        private final List<Cell> visitedOrder; // Urutan eksplorasi (untuk animasi)
-        private final List<Cell> path;         // Jalur solusi akhir (garis tebal)
+        private final List<Cell> visitedOrder;
+        private final List<List<Cell>> paths;
 
-        public SolverResult(List<Cell> visitedOrder, List<Cell> path) {
+        public SolverResult(List<Cell> visitedOrder, List<List<Cell>> paths) {
             this.visitedOrder = visitedOrder;
-            this.path = path;
+            this.paths = paths;
         }
 
         public List<Cell> getVisitedOrder() { return visitedOrder; }
-        public List<Cell> getPath() { return path; }
+        public List<List<Cell>> getPaths() { return paths; }
     }
 
-    // --- 1. BFS (Breadth-First Search) ---
-    // Mencari jalur dengan JUMLAH LANGKAH paling sedikit (mengabaikan bobot/cost)
+    // --- 1. BFS ---
     public SolverResult solveBFS(MazeGraph graph) {
-        graph.resetGraphState(); // Reset visited & parent
+        graph.resetGraphState();
         Cell start = graph.getStart();
         Cell end = graph.getEnd();
 
@@ -43,7 +41,6 @@ public class MazeSolver {
                 break;
             }
 
-            // MENGGUNAKAN GRAPH ADJACENCY LIST
             for (Cell neighbor : current.getNeighbors()) {
                 if (!neighbor.isVisited()) {
                     neighbor.setVisited(true);
@@ -53,11 +50,14 @@ public class MazeSolver {
             }
         }
 
-        return new SolverResult(visitedOrder, found ? reconstructPath(end) : new ArrayList<>());
+        List<List<Cell>> resultPaths = new ArrayList<>();
+        if (found) {
+            resultPaths.add(reconstructSinglePath(end));
+        }
+        return new SolverResult(visitedOrder, resultPaths);
     }
 
-    // --- 2. DFS (Depth-First Search) ---
-    // Mencari jalur dengan mengebor sedalam mungkin (seringkali pathnya jelek/memutar)
+    // --- 2. DFS ---
     public SolverResult solveDFS(MazeGraph graph) {
         graph.resetGraphState();
         Cell start = graph.getStart();
@@ -79,7 +79,6 @@ public class MazeSolver {
                 break;
             }
 
-            // GRAPH TRAVERSAL
             for (Cell neighbor : current.getNeighbors()) {
                 if (!neighbor.isVisited()) {
                     neighbor.setVisited(true);
@@ -89,91 +88,111 @@ public class MazeSolver {
             }
         }
 
-        return new SolverResult(visitedOrder, found ? reconstructPath(end) : new ArrayList<>());
+        List<List<Cell>> resultPaths = new ArrayList<>();
+        if (found) {
+            resultPaths.add(reconstructSinglePath(end));
+        }
+        return new SolverResult(visitedOrder, resultPaths);
     }
 
     // --- 3. DIJKSTRA ---
-    // Mencari jalur dengan TOTAL COST TERENDAH (Weighted)
     public SolverResult solveDijkstra(MazeGraph graph) {
-        return solveWeighted(graph, false); // false = tanpa heuristic
+        return solveWeighted(graph, false);
     }
 
-    // --- 4. A* (A-Star) ---
-    // Mencari jalur terendah tapi lebih pintar (menggunakan Heuristic arah target)
+    // --- 4. A* STAR ---
     public SolverResult solveAStar(MazeGraph graph) {
-        return solveWeighted(graph, true);  // true = pakai heuristic
+        return solveWeighted(graph, true);
     }
 
-    // Logika Inti Weighted Search (Dijkstra & A*)
+    // --- WEIGHTED LOGIC (Fix Cycle Issue) ---
     private SolverResult solveWeighted(MazeGraph graph, boolean useHeuristic) {
         graph.resetGraphState();
         Cell start = graph.getStart();
         Cell end = graph.getEnd();
 
         List<Cell> visitedOrder = new ArrayList<>();
-
-        // PriorityQueue menggunakan compareTo di class Cell (berdasarkan fScore)
         PriorityQueue<Cell> pq = new PriorityQueue<>();
 
-        start.setDistance(0); // g-score
-        start.setFScore(0);   // f-score
+        start.setDistance(0);
+        start.setFScore(0);
         pq.add(start);
 
-        boolean found = false;
         while (!pq.isEmpty()) {
             Cell current = pq.poll();
 
-            // Jika node sudah dikunjungi dengan cost lebih rendah, skip
             if (current.isVisited()) continue;
             current.setVisited(true);
             visitedOrder.add(current);
 
             if (current == end) {
-                found = true;
-                break;
+                continue; // Lanjut cari path alternatif lain yang cost-nya sama
             }
 
             for (Cell neighbor : current.getNeighbors()) {
-                if (neighbor.isVisited()) continue;
-
-                // Hitung tentative g-score: Jarak saat ini + Cost Tipe Cell Tetangga
                 double newDist = current.getDistance() + neighbor.getType().getCost();
+                double heuristic = 0;
+                if (useHeuristic) {
+                    heuristic = Math.abs(neighbor.getRow() - end.getRow()) +
+                            Math.abs(neighbor.getCol() - end.getCol());
+                }
 
                 if (newDist < neighbor.getDistance()) {
                     neighbor.setDistance(newDist);
-                    neighbor.setParent(current);
-
-                    double heuristic = 0;
-                    if (useHeuristic) {
-                        // Manhattan Distance Heuristic
-                        heuristic = Math.abs(neighbor.getRow() - end.getRow()) +
-                                Math.abs(neighbor.getCol() - end.getCol());
-                    }
-
-                    // fScore = gScore + hScore
-                    // Untuk Dijkstra, hScore = 0, jadi fScore murni jarak.
-                    // Untuk A*, fScore kombinasi jarak dan taksiran.
                     neighbor.setFScore(newDist + heuristic);
-
-                    // Hapus & add ulang untuk update posisi di PriorityQueue (re-sort)
-                    pq.remove(neighbor);
+                    neighbor.setParent(current); // Reset parent list
                     pq.add(neighbor);
+                }
+                else if (newDist == neighbor.getDistance()) {
+                    neighbor.addParent(current); // Tambah parent alternatif
                 }
             }
         }
 
-        return new SolverResult(visitedOrder, found ? reconstructPath(end) : new ArrayList<>());
+        List<List<Cell>> allPaths = new ArrayList<>();
+        if (end.getDistance() != Double.MAX_VALUE) {
+            // Mulai rekonstruksi rekursif
+            reconstructAllPathsRecursive(end, new ArrayList<>(), allPaths);
+        }
+
+        return new SolverResult(visitedOrder, allPaths);
     }
 
-    // Helper: Backtracking dari Finish ke Start untuk membentuk garis jalur
-    private List<Cell> reconstructPath(Cell end) {
+    private List<Cell> reconstructSinglePath(Cell end) {
         List<Cell> path = new ArrayList<>();
         Cell current = end;
         while (current != null) {
             path.add(current);
-            current = current.getParent();
+            if (!current.getParents().isEmpty()) {
+                current = current.getParents().get(0);
+            } else {
+                current = null;
+            }
         }
-        Collections.reverse(path); // Balik agar urut dari Start -> End
+        Collections.reverse(path);
         return path;
+    }
+
+    // --- PERBAIKAN UTAMA ADA DI SINI ---
+    private void reconstructAllPathsRecursive(Cell current, List<Cell> currentPath, List<List<Cell>> allPaths) {
+        // Cek Cycle: Jika node ini sudah ada di path yang sedang kita bangun, berhenti (Dead End / Loop)
+        if (currentPath.contains(current)) {
+            return;
+        }
+
+        currentPath.add(current);
+
+        // Base Case: Distance 0 berarti Start Node
+        if (current.getDistance() == 0) {
+            List<Cell> validPath = new ArrayList<>(currentPath);
+            Collections.reverse(validPath);
+            allPaths.add(validPath);
+        } else {
+            // Recurse ke semua parent
+            for (Cell parent : current.getParents()) {
+                // Kirim copy path agar tidak bentrok antar cabang
+                reconstructAllPathsRecursive(parent, new ArrayList<>(currentPath), allPaths);
+            }
+        }
     }
 }

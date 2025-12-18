@@ -13,7 +13,7 @@ public class Cell implements Comparable<Cell> {
 
     // Variabel bantu untuk algoritma (visited, parent, distance)
     private boolean visited;
-    private Cell parent;     // Untuk backtracking path
+    private List<Cell> parents;
     private double distance; // g-score (biaya dari start ke node ini)
     private double fScore;   // f-score (g-score + heuristic untuk A*)
 
@@ -22,6 +22,7 @@ public class Cell implements Comparable<Cell> {
         this.col = col;
         this.type = CellType.WALL; // Default semua tembok dulu sebelum digenerate
         this.neighbors = new ArrayList<>();
+        this.parents = new ArrayList<>();
         resetAlgorithmData();
     }
 
@@ -33,7 +34,7 @@ public class Cell implements Comparable<Cell> {
 
     public void resetAlgorithmData() {
         this.visited = false;
-        this.parent = null;
+        this.parents.clear();
         this.distance = Double.MAX_VALUE;
         this.fScore = Double.MAX_VALUE;
     }
@@ -47,8 +48,18 @@ public class Cell implements Comparable<Cell> {
 
     public boolean isVisited() { return visited; }
     public void setVisited(boolean visited) { this.visited = visited; }
-    public Cell getParent() { return parent; }
-    public void setParent(Cell parent) { this.parent = parent; }
+
+    public List<Cell> getParents() { return parents; }
+    public void addParent(Cell parent) {
+        if (!this.parents.contains(parent)) {
+            this.parents.add(parent);
+        }
+    }
+    public void setParent(Cell parent) {
+        this.parents.clear();
+        this.parents.add(parent);
+    }
+
     public double getDistance() { return distance; }
     public void setDistance(double distance) { this.distance = distance; }
     public double getFScore() { return fScore; }
