@@ -108,10 +108,15 @@ public class MazePanel extends JPanel {
         btnBack.addActionListener(e -> {
             soundManager.playSFX("click");
             stopMusic();
+
             Window window = SwingUtilities.getWindowAncestor(this);
             if (window != null) {
                 window.dispose();
             }
+
+            SwingUtilities.invokeLater(() -> {
+                new IntroScreenMaze().setVisible(true);
+            });
         });
 
         actionPanel.add(btnGen);

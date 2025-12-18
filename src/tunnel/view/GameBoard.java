@@ -162,7 +162,8 @@ public class GameBoard extends JFrame {
             soundManager.playClick();
             soundManager.stopAllBGM();
             this.dispose();
-            new MainLauncher().setVisible(true);
+            gameController.reset();
+            new IntroScreen(gameController).setVisible(true);
         });
 
         gameLogArea = new JTextArea();
