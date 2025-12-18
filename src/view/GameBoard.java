@@ -491,7 +491,7 @@ public class GameBoard extends JFrame {
         dialog.setLayout(new BorderLayout());
 
         // Header
-        JLabel header = new JLabel("🏆 CONGRATULATIONS! 🏆", SwingConstants.CENTER);
+        JLabel header = new JLabel("👑 CONGRATULATIONS! 👑", SwingConstants.CENTER);
         header.setFont(new Font("Impact", Font.ITALIC, 32));
         header.setForeground(new Color(255, 215, 0)); // Gold
         header.setOpaque(true);
