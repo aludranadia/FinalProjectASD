@@ -687,14 +687,21 @@ public class GameBoard extends JFrame {
         footerPanel.setBackground(new Color(20, 15, 10)); // Samakan dengan mainPanel
         footerPanel.setBorder(new EmptyBorder(15, 0, 20, 0));
 
-        // TOMBOL CLOSE (VISIBLE & SOUND)
+        // --- FIX TOMBOL CLOSE & RESET YANG TIDAK TERLIHAT ---
         JButton closeBtn = new JButton("CLOSE & RESET");
         closeBtn.setPreferredSize(new Dimension(200, 50));
         closeBtn.setFont(new Font("Segoe UI", Font.BOLD, 16));
+
+        // Warna Background dan Text
         closeBtn.setBackground(new Color(52, 152, 219)); // Biru Terang
         closeBtn.setForeground(Color.WHITE);             // Teks Putih
+
+        // WAJIB DITAMBAHKAN agar warna background tidak tertimpa oleh default system (putih)
+        closeBtn.setOpaque(true);
+        closeBtn.setContentAreaFilled(true);
+        closeBtn.setBorderPainted(false); // Style Flat agar lebih bersih
         closeBtn.setFocusPainted(false);
-        closeBtn.setBorder(BorderFactory.createLineBorder(new Color(41, 128, 185), 2));
+
         closeBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         closeBtn.addActionListener(e -> {
