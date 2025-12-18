@@ -11,12 +11,18 @@ public class GameController {
     private boolean gameStarted;
     private boolean gameEnded;
 
+    private Map<String, Integer> globalWinCounts;   // Menyimpan jumlah kemenangan (Top Win)
+    private Map<String, Integer> globalHighScores;  // Menyimpan skor tertinggi (Top Score)
+
     public GameController() {
         this.graph = new Graph();
         this.playerQueue = new LinkedList<>();
         this.dice = new Dice();
         this.gameStarted = false;
         this.gameEnded = false;
+
+        this.globalWinCounts = new HashMap<>();
+        this.globalHighScores = new HashMap<>();
     }
 
     public void reset() {
@@ -89,17 +95,23 @@ public class GameController {
                     currentPlayer.setPosition(currentSimulatedPos);
                 }
             }
-            // HAPUS BARIS INI -> currentPlayer.moveBackward(diceNumber);
+
         }
 
         Node finalNode = graph.getNode(currentPlayer.getCurrentPosition());
         int coinEffect = 0;
         if (finalNode != null) {
             coinEffect = finalNode.getCoinValue();
-            currentPlayer.addCoins(coinEffect);
+            currentPlayer.addCoins(coinEffect); // Collect Bonus Point
         }
 
-        if (currentPlayer.hasWon()) gameEnded = true;
+        if (currentPlayer.hasWon()) {
+            gameEnded = true;
+            // BONUS BESAR untuk yang mencapai finish duluan (misal +50 poin)
+            // agar pemain yang finish punya peluang besar jadi juara 1 di PriorityQueue
+            currentPlayer.addCoins(50);
+            updateGlobalStats(currentPlayer); // Update Map Statistik
+        }
 
         boolean bonusTurn = false;
         int finalPos = currentPlayer.getCurrentPosition();
@@ -119,6 +131,29 @@ public class GameController {
         return result;
     }
 
+    private void updateGlobalStats(Player winner) {
+        String winnerName = winner.getName();
+        globalWinCounts.put(winnerName, globalWinCounts.getOrDefault(winnerName, 0) + 1);
+
+        for (Player p : playerQueue) {
+            String pName = p.getName();
+            int currentScore = p.getCoins();
+            int highestScore = globalHighScores.getOrDefault(pName, 0);
+
+            if (currentScore > highestScore) {
+                globalHighScores.put(pName, currentScore);
+            }
+        }
+
+        if (currentPlayer != null && !playerQueue.contains(currentPlayer)) {
+            String pName = currentPlayer.getName();
+            int currentScore = currentPlayer.getCoins();
+            if (currentScore > globalHighScores.getOrDefault(pName, 0)) {
+                globalHighScores.put(pName, currentScore);
+            }
+        }
+    }
+
     // --- LEADERBOARD ---
     public PriorityQueue<Player> getScoreLeaderboard() {
         PriorityQueue<Player> pq = new PriorityQueue<>();
@@ -128,6 +163,9 @@ public class GameController {
         }
         return pq;
     }
+
+    public Map<String, Integer> getGlobalWinCounts() { return globalWinCounts; }
+    public Map<String, Integer> getGlobalHighScores() { return globalHighScores; }
 
     private void nextPlayer() {
         Player player = playerQueue.poll();

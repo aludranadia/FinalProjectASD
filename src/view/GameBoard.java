@@ -459,9 +459,8 @@ public class GameBoard extends JFrame {
             soundManager.stop("game_bgm");
             soundManager.play("win");
 
-            JOptionPane.showMessageDialog(this,
-                    "🏆 MENANG! 🏆\n" + result.getPlayer().getName() + " berhasil kabur!",
-                    "Game Over", JOptionPane.INFORMATION_MESSAGE);
+            showLeaderboardDialog();
+
             rollDiceButton.setEnabled(false);
         } else {
             rollDiceButton.setEnabled(true);
@@ -485,67 +484,131 @@ public class GameBoard extends JFrame {
         }
     }
 
-    private void showLeaderboardDialog(Player winner) {
-        JDialog dialog = new JDialog(this, "GAME OVER", true);
-        dialog.setSize(400, 500);
+    private void showLeaderboardDialog() {
+        JDialog dialog = new JDialog(this, "GAME OVER - RESULTS", true);
+        dialog.setSize(550, 600);
         dialog.setLocationRelativeTo(this);
+        dialog.setLayout(new BorderLayout());
 
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBackground(new Color(30, 30, 40));
-        panel.setBorder(new EmptyBorder(20, 20, 20, 20));
+        // Header
+        JLabel header = new JLabel("🏆 CONGRATULATIONS! 🏆", SwingConstants.CENTER);
+        header.setFont(new Font("Impact", Font.ITALIC, 32));
+        header.setForeground(new Color(255, 215, 0)); // Gold
+        header.setOpaque(true);
+        header.setBackground(new Color(40, 40, 50));
+        header.setBorder(new EmptyBorder(15, 0, 15, 0));
+        dialog.add(header, BorderLayout.NORTH);
 
-        JLabel title = new JLabel("🏆 VICTORY! 🏆");
-        title.setFont(new Font("Impact", Font.PLAIN, 32));
-        title.setForeground(new Color(255, 215, 0));
-        title.setAlignmentX(CENTER_ALIGNMENT);
+        // Tabbed Pane untuk memisahkan "Match Result" dan "Hall of Fame"
+        JTabbedPane tabbedPane = new JTabbedPane();
+        tabbedPane.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        tabbedPane.setBackground(new Color(200, 200, 200));
 
-        JLabel subTitle = new JLabel(winner.getName() + " Reached the Exit!");
-        subTitle.setForeground(Color.WHITE);
+        JPanel rankingPanel = new JPanel();
+        rankingPanel.setLayout(new BoxLayout(rankingPanel, BoxLayout.Y_AXIS));
+        rankingPanel.setBackground(new Color(50, 50, 60));
+        rankingPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
+
+        JLabel subTitle = new JLabel("RANKING BASED ON POINTS");
+        subTitle.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        subTitle.setForeground(Color.CYAN);
         subTitle.setAlignmentX(CENTER_ALIGNMENT);
-
-        panel.add(title);
-        panel.add(subTitle);
-        panel.add(Box.createRigidArea(new Dimension(0, 20)));
-
-        JLabel rankTitle = new JLabel("--- SCORE LEADERBOARD ---");
-        rankTitle.setForeground(Color.CYAN);
-        rankTitle.setAlignmentX(CENTER_ALIGNMENT);
-        panel.add(rankTitle);
-        panel.add(Box.createRigidArea(new Dimension(0, 10)));
+        rankingPanel.add(subTitle);
+        rankingPanel.add(Box.createRigidArea(new Dimension(0, 15)));
 
         PriorityQueue<Player> pq = gameController.getScoreLeaderboard();
         int rank = 1;
-        while (!pq.isEmpty()) {
-            Player p = pq.poll();
-            JPanel row = new JPanel(new BorderLayout());
-            row.setBackground(new Color(50, 50, 60));
-            row.setMaximumSize(new Dimension(350, 40));
-            row.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.GRAY));
 
-            JLabel left = new JLabel(" #" + rank + " " + p.getName());
-            left.setForeground(Color.WHITE);
-            left.setFont(new Font("Segoe UI", Font.BOLD, 14));
-            left.setBorder(new EmptyBorder(0,10,0,0));
+        PriorityQueue<Player> pqClone = new PriorityQueue<>(pq);
 
-            JLabel right = new JLabel("Coins: " + p.getCoins() + "  ");
-            right.setForeground(new Color(255, 215, 0));
-
-            row.add(left, BorderLayout.WEST);
-            row.add(right, BorderLayout.EAST);
-            panel.add(row);
-            panel.add(Box.createRigidArea(new Dimension(0, 5)));
+        while (!pqClone.isEmpty()) {
+            Player p = pqClone.poll();
+            JPanel row = createRankRow(rank, p.getName(), p.getCoins(), true);
+            rankingPanel.add(row);
+            rankingPanel.add(Box.createRigidArea(new Dimension(0, 8)));
             rank++;
         }
+        tabbedPane.addTab("Current Match", rankingPanel);
 
-        JButton closeBtn = new JButton("CLOSE");
-        closeBtn.setAlignmentX(CENTER_ALIGNMENT);
-        closeBtn.addActionListener(e -> dialog.dispose());
+        JPanel hallOfFamePanel = new JPanel();
+        hallOfFamePanel.setLayout(new BoxLayout(hallOfFamePanel, BoxLayout.Y_AXIS));
+        hallOfFamePanel.setBackground(new Color(40, 30, 40));
+        hallOfFamePanel.setBorder(new EmptyBorder(20, 20, 20, 20));
 
-        panel.add(Box.createVerticalGlue());
-        panel.add(closeBtn);
+        JLabel winTitle = new JLabel("👑 TOP WINNERS (All Time)");
+        winTitle.setForeground(Color.ORANGE);
+        winTitle.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        winTitle.setAlignmentX(CENTER_ALIGNMENT);
+        hallOfFamePanel.add(winTitle);
+        hallOfFamePanel.add(Box.createRigidArea(new Dimension(0, 10)));
 
-        dialog.add(panel);
+        gameController.getGlobalWinCounts().entrySet().stream()
+                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                .limit(5) // Tampilkan top 5 saja
+                .forEach(entry -> {
+                    JPanel row = createRankRow(0, entry.getKey(), entry.getValue(), false);
+                    hallOfFamePanel.add(row);
+                    hallOfFamePanel.add(Box.createRigidArea(new Dimension(0, 5)));
+                });
+
+        hallOfFamePanel.add(Box.createRigidArea(new Dimension(0, 20)));
+
+        JLabel scoreTitle = new JLabel("🔥 LEGENDARY HIGH SCORES");
+        scoreTitle.setForeground(Color.MAGENTA);
+        scoreTitle.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        scoreTitle.setAlignmentX(CENTER_ALIGNMENT);
+        hallOfFamePanel.add(scoreTitle);
+        hallOfFamePanel.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        gameController.getGlobalHighScores().entrySet().stream()
+                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                .limit(5)
+                .forEach(entry -> {
+                    JPanel row = createRankRow(0, entry.getKey(), entry.getValue(), true);
+                    hallOfFamePanel.add(row);
+                    hallOfFamePanel.add(Box.createRigidArea(new Dimension(0, 5)));
+                });
+
+        tabbedPane.addTab("Hall of Fame", hallOfFamePanel);
+        dialog.add(tabbedPane, BorderLayout.CENTER);
+
+        // Footer Button
+        JButton closeBtn = new JButton("CLOSE & RESET");
+        closeBtn.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        closeBtn.setBackground(new Color(52, 152, 219));
+        closeBtn.setForeground(Color.WHITE);
+        closeBtn.addActionListener(e -> {
+            dialog.dispose();
+            handleNewGame();
+        });
+
+        JPanel footer = new JPanel();
+        footer.setBackground(new Color(40, 40, 50));
+        footer.add(closeBtn);
+        dialog.add(footer, BorderLayout.SOUTH);
+
         dialog.setVisible(true);
+    }
+
+    private JPanel createRankRow(int rank, String name, int value, boolean isScore) {
+        JPanel row = new JPanel(new BorderLayout());
+        row.setMaximumSize(new Dimension(450, 40));
+        row.setBackground(new Color(70, 70, 80));
+        row.setBorder(BorderFactory.createMatteBorder(0, 4, 0, 0,
+                (rank == 1) ? Color.YELLOW : (rank == 2 ? Color.LIGHT_GRAY : (rank == 3 ? new Color(205, 127, 50) : Color.DARK_GRAY))));
+
+        String rankStr = (rank > 0) ? "#" + rank + " " : "⭐ ";
+        JLabel nameLbl = new JLabel(" " + rankStr + name);
+        nameLbl.setForeground(Color.WHITE);
+        nameLbl.setFont(new Font("Segoe UI", Font.BOLD, 14));
+
+        String suffix = isScore ? " Coins" : " Wins";
+        JLabel valLbl = new JLabel(value + suffix + "  ");
+        valLbl.setForeground(new Color(255, 215, 0)); // Gold text
+        valLbl.setFont(new Font("Monospaced", Font.BOLD, 14));
+
+        row.add(nameLbl, BorderLayout.WEST);
+        row.add(valLbl, BorderLayout.EAST);
+        return row;
     }
 }
