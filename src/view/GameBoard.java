@@ -45,6 +45,9 @@ public class GameBoard extends JFrame {
     private int visualCurrentNode;
     private List<Integer> animationPath;
 
+    private static final int SPEED_NORMAL = 300; // Milidetik per langkah biasa
+    private static final int SPEED_FAST = 100;   // Milidetik saat lari di shortcut
+
     private int currentDiceNumber = 1;
     private String currentDiceColor = "WHITE";
     private boolean isRolling = false;
@@ -413,38 +416,74 @@ public class GameBoard extends JFrame {
             animationPath.add(result.getNewPosition());
         }
 
-        int speedDelay = result.isUsedShortcut() ? 50 : 300;
+        int firstDelay = SPEED_NORMAL;
+        if (!animationPath.isEmpty()) {
+            int nextNode = animationPath.get(0);
+            // Jika selisih node > 1, berarti ini shortcut (Dash)
+            if (Math.abs(nextNode - visualCurrentNode) > 1) {
+                firstDelay = SPEED_FAST;
+            }
+        }
 
-        startMovementAnimation(result, speedDelay);
+        startMovementAnimation(result, firstDelay);
         rightPanel.repaint();
     }
 
-    private void startMovementAnimation(GameController.TurnResult result, int delay) {
-        boolean isRunningFast = (delay < 100);
-
-        if (isRunningFast) {
-            soundManager.play("dash");
+    private void startMovementAnimation(GameController.TurnResult result, int initialDelay) {
+        if (animationTimer != null && animationTimer.isRunning()) {
+            animationTimer.stop();
         }
 
-        animationTimer = new Timer(delay, new ActionListener() {
+        animationTimer = new Timer(initialDelay, null);
+
+        animationTimer.addActionListener(new ActionListener() {
             int index = 0;
+
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (index < animationPath.size()) {
-                    visualCurrentNode = animationPath.get(index);
+                    // 1. Ambil target node berikutnya dari path
+                    int targetNode = animationPath.get(index);
 
-                    if (!isRunningFast) {
+                    // 2. Tentukan suara apa yang dimainkan (Lompat vs Jalan)
+                    // Hitung jarak dari posisi visual SEKARANG ke target
+                    int distance = Math.abs(targetNode - visualCurrentNode);
+
+                    if (distance > 1) {
+                        // Jarak jauh = Shortcut
+                        soundManager.play("dash");
+                    } else {
+                        // Jarak 1 = Jalan biasa
                         soundManager.playStep();
                     }
 
+                    // 3. Update Visual
+                    visualCurrentNode = targetNode;
                     boardPanel.repaint();
                     index++;
+
+                    // 4. --- LOGIKA DINAMIS KECEPATAN (Look Ahead) ---
+                    if (index < animationPath.size()) {
+                        int nextTarget = animationPath.get(index);
+                        int nextDistance = Math.abs(nextTarget - visualCurrentNode);
+
+                        // Jika langkah BERIKUTNYA adalah shortcut (jarak > 1), percepat timer
+                        if (nextDistance > 1) {
+                            animationTimer.setDelay(SPEED_FAST);
+                        } else {
+                            // Jika langkah berikutnya biasa, kembalikan ke normal
+                            animationTimer.setDelay(SPEED_NORMAL);
+                        }
+                    }
                 } else {
+                    // Animasi selesai
                     ((Timer)e.getSource()).stop();
                     endTurn(result);
                 }
             }
         });
+
+        animationTimer.setInitialDelay(initialDelay);
         animationTimer.start();
     }
 
