@@ -2,15 +2,13 @@ package main;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 
 // Import komponen dari Game 1 (Tunnel)
 import tunnel.controller.GameController;
 import tunnel.view.IntroScreen;
 
 // Import komponen dari Game 2 (Maze)
-import maze.view.MazePanel;
+import maze.view.IntroScreenMaze;
 
 public class MainLauncher extends JFrame {
 
@@ -68,24 +66,7 @@ public class MainLauncher extends JFrame {
     private void launchMazeGame() {
         this.dispose(); // Tutup Menu Utama
         SwingUtilities.invokeLater(() -> {
-            JFrame mazeFrame = new JFrame("Maze Graph Solver - BFS/DFS/Dijkstra/A*");
-            mazeFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); // Jangan exit app, cuma close window
-            mazeFrame.setSize(1000, 800);
-            mazeFrame.setLocationRelativeTo(null);
-            mazeFrame.setResizable(false);
-
-            // Tambahkan Panel Maze
-            mazeFrame.add(new MazePanel());
-
-            // Listener jika user menekan tombol X (close) di window, kembali ke menu
-            mazeFrame.addWindowListener(new WindowAdapter() {
-                @Override
-                public void windowClosed(WindowEvent e) {
-                    new MainLauncher().setVisible(true);
-                }
-            });
-
-            mazeFrame.setVisible(true);
+            new IntroScreenMaze().setVisible(true);
         });
     }
 

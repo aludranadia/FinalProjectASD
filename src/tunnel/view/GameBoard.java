@@ -3,7 +3,7 @@ package tunnel.view;
 import tunnel.controller.GameController;
 import tunnel.model.Player;
 import tunnel.model.Node;
-// Import MainLauncher agar bisa kembali ke menu
+// Import main.MainLauncher agar bisa kembali ke menu
 import main.MainLauncher;
 
 import javax.imageio.ImageIO;
