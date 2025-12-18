@@ -153,7 +153,7 @@ public class GameBoard extends JFrame {
         newGameButton.addActionListener(e -> handleNewGame());
 
         // 3. BACK TO MENU (NEW)
-        backButton = createStyledButton("🏠 MENU", new Color(192, 57, 43), Color.WHITE);
+        backButton = createStyledButton("MENU", new Color(192, 57, 43), Color.WHITE);
         backButton.addActionListener(e -> {
             soundManager.stop("game_bgm");
             this.dispose();
