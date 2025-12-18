@@ -52,6 +52,9 @@ public class GameBoard extends JFrame {
     private String currentDiceColor = "WHITE";
     private boolean isRolling = false;
 
+    // FONT KHUSUS AGAR EMOJI KEDETECT DI WINDOWS
+    private static final Font EMOJI_FONT = new Font("Segoe UI Emoji", Font.BOLD, 14);
+
     public GameBoard(GameController gameController) {
         this.gameController = gameController;
         this.loadedImages = new HashMap<>();
@@ -160,6 +163,7 @@ public class GameBoard extends JFrame {
         gameLogArea.setEditable(false);
         gameLogArea.setBackground(new Color(40, 30, 20));
         gameLogArea.setForeground(new Color(200, 255, 200));
+        // Ganti font log juga biar emoji kebaca
         gameLogArea.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 12));
 
         JScrollPane scrollLog = new JScrollPane(gameLogArea);
@@ -419,7 +423,6 @@ public class GameBoard extends JFrame {
         int firstDelay = SPEED_NORMAL;
         if (!animationPath.isEmpty()) {
             int nextNode = animationPath.get(0);
-            // Jika selisih node > 1, berarti ini shortcut (Dash)
             if (Math.abs(nextNode - visualCurrentNode) > 1) {
                 firstDelay = SPEED_FAST;
             }
@@ -442,41 +445,29 @@ public class GameBoard extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (index < animationPath.size()) {
-                    // 1. Ambil target node berikutnya dari path
                     int targetNode = animationPath.get(index);
-
-                    // 2. Tentukan suara apa yang dimainkan (Lompat vs Jalan)
-                    // Hitung jarak dari posisi visual SEKARANG ke target
                     int distance = Math.abs(targetNode - visualCurrentNode);
 
                     if (distance > 1) {
-                        // Jarak jauh = Shortcut
                         soundManager.play("dash");
                     } else {
-                        // Jarak 1 = Jalan biasa
                         soundManager.playStep();
                     }
 
-                    // 3. Update Visual
                     visualCurrentNode = targetNode;
                     boardPanel.repaint();
                     index++;
 
-                    // 4. --- LOGIKA DINAMIS KECEPATAN (Look Ahead) ---
                     if (index < animationPath.size()) {
                         int nextTarget = animationPath.get(index);
                         int nextDistance = Math.abs(nextTarget - visualCurrentNode);
-
-                        // Jika langkah BERIKUTNYA adalah shortcut (jarak > 1), percepat timer
                         if (nextDistance > 1) {
                             animationTimer.setDelay(SPEED_FAST);
                         } else {
-                            // Jika langkah berikutnya biasa, kembalikan ke normal
                             animationTimer.setDelay(SPEED_NORMAL);
                         }
                     }
                 } else {
-                    // Animasi selesai
                     ((Timer)e.getSource()).stop();
                     endTurn(result);
                 }
@@ -487,6 +478,7 @@ public class GameBoard extends JFrame {
         animationTimer.start();
     }
 
+    // --- REVISI DI SINI (POP-UP TEXT & VISUAL) ---
     private void endTurn(GameController.TurnResult result) {
         animatingPlayer = null;
         animationPath = null;
@@ -506,51 +498,56 @@ public class GameBoard extends JFrame {
 
             int coinEffect = result.getCoinEffect();
             if (coinEffect > 0) {
-                soundManager.play("point_plus"); // Suara Koin +
+                soundManager.play("point_plus");
             } else if (coinEffect < 0) {
-                soundManager.play("point_minus");  // Suara Koin -
+                soundManager.play("point_minus");
             }
 
             if (result.isBonusTurn()) {
                 soundManager.play("bonus");
 
+                // FIX: Teks bahasa Inggris yang lebih baik
                 JOptionPane.showMessageDialog(this,
                         "✨ LUCKY SPOT! ✨\n" +
-                                result.getPlayer().getName() + " mendarat di Node " + result.getNewPosition() +
-                                "\n(Kelipatan 5). Roll Dadu Sekali Lagi!",
+                                "You found a Lunch Box! 🍱\n" +
+                                "Roll the dice again to get your energy reward!",
                         "Double Turn", JOptionPane.INFORMATION_MESSAGE);
             }
         }
     }
 
+    // --- REVISI DI SINI (LEADERBOARD PREMIUM & EMOJI FIX) ---
     private void showLeaderboardDialog() {
         JDialog dialog = new JDialog(this, "GAME OVER - RESULTS", true);
-        dialog.setSize(550, 600);
+        dialog.setSize(600, 650);
         dialog.setLocationRelativeTo(this);
         dialog.setLayout(new BorderLayout());
 
         // Header
-        JLabel header = new JLabel("👑 CONGRATULATIONS! 👑", SwingConstants.CENTER);
-        header.setFont(new Font("Impact", Font.ITALIC, 32));
+        JPanel headerPanel = new JPanel();
+        headerPanel.setBackground(new Color(25, 20, 15));
+        JLabel header = new JLabel("🏆 CONGRATULATIONS! 🏆", SwingConstants.CENTER);
+        header.setFont(EMOJI_FONT.deriveFont(28f)); // Pakai EMOJI_FONT
         header.setForeground(new Color(255, 215, 0)); // Gold
-        header.setOpaque(true);
-        header.setBackground(new Color(40, 40, 50));
-        header.setBorder(new EmptyBorder(15, 0, 15, 0));
-        dialog.add(header, BorderLayout.NORTH);
+        headerPanel.setBorder(new EmptyBorder(15, 0, 15, 0));
+        headerPanel.add(header);
+        dialog.add(headerPanel, BorderLayout.NORTH);
 
-        // Tabbed Pane untuk memisahkan "Match Result" dan "Hall of Fame"
+        // Tabbed Pane Styling
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        tabbedPane.setBackground(new Color(200, 200, 200));
+        tabbedPane.setBackground(new Color(50, 45, 40));
+        tabbedPane.setForeground(Color.BLACK);
 
+        // --- TAB 1: CURRENT MATCH ---
         JPanel rankingPanel = new JPanel();
         rankingPanel.setLayout(new BoxLayout(rankingPanel, BoxLayout.Y_AXIS));
-        rankingPanel.setBackground(new Color(50, 50, 60));
+        rankingPanel.setBackground(new Color(40, 35, 30));
         rankingPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
 
-        JLabel subTitle = new JLabel("RANKING BASED ON POINTS");
-        subTitle.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        subTitle.setForeground(Color.CYAN);
+        JLabel subTitle = new JLabel("📊 RANKING BASED ON POINTS");
+        subTitle.setFont(EMOJI_FONT);
+        subTitle.setForeground(new Color(135, 206, 250));
         subTitle.setAlignmentX(CENTER_ALIGNMENT);
         rankingPanel.add(subTitle);
         rankingPanel.add(Box.createRigidArea(new Dimension(0, 15)));
@@ -569,21 +566,22 @@ public class GameBoard extends JFrame {
         }
         tabbedPane.addTab("Current Match", rankingPanel);
 
+        // --- TAB 2: HALL OF FAME ---
         JPanel hallOfFamePanel = new JPanel();
         hallOfFamePanel.setLayout(new BoxLayout(hallOfFamePanel, BoxLayout.Y_AXIS));
-        hallOfFamePanel.setBackground(new Color(40, 30, 40));
+        hallOfFamePanel.setBackground(new Color(30, 25, 35));
         hallOfFamePanel.setBorder(new EmptyBorder(20, 20, 20, 20));
 
         JLabel winTitle = new JLabel("👑 TOP WINNERS (All Time)");
         winTitle.setForeground(Color.ORANGE);
-        winTitle.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        winTitle.setFont(EMOJI_FONT);
         winTitle.setAlignmentX(CENTER_ALIGNMENT);
         hallOfFamePanel.add(winTitle);
         hallOfFamePanel.add(Box.createRigidArea(new Dimension(0, 10)));
 
         gameController.getGlobalWinCounts().entrySet().stream()
                 .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
-                .limit(5) // Tampilkan top 5 saja
+                .limit(5)
                 .forEach(entry -> {
                     JPanel row = createRankRow(0, entry.getKey(), entry.getValue(), false);
                     hallOfFamePanel.add(row);
@@ -594,7 +592,7 @@ public class GameBoard extends JFrame {
 
         JLabel scoreTitle = new JLabel("🔥 LEGENDARY HIGH SCORES");
         scoreTitle.setForeground(Color.MAGENTA);
-        scoreTitle.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        scoreTitle.setFont(EMOJI_FONT);
         scoreTitle.setAlignmentX(CENTER_ALIGNMENT);
         hallOfFamePanel.add(scoreTitle);
         hallOfFamePanel.add(Box.createRigidArea(new Dimension(0, 10)));
@@ -616,13 +614,15 @@ public class GameBoard extends JFrame {
         closeBtn.setFont(new Font("Segoe UI", Font.BOLD, 16));
         closeBtn.setBackground(new Color(52, 152, 219));
         closeBtn.setForeground(Color.WHITE);
+        closeBtn.setFocusPainted(false);
         closeBtn.addActionListener(e -> {
             dialog.dispose();
             handleNewGame();
         });
 
         JPanel footer = new JPanel();
-        footer.setBackground(new Color(40, 40, 50));
+        footer.setBackground(new Color(25, 20, 15));
+        footer.setBorder(new EmptyBorder(10,0,10,0));
         footer.add(closeBtn);
         dialog.add(footer, BorderLayout.SOUTH);
 
@@ -631,19 +631,32 @@ public class GameBoard extends JFrame {
 
     private JPanel createRankRow(int rank, String name, int value, boolean isScore) {
         JPanel row = new JPanel(new BorderLayout());
-        row.setMaximumSize(new Dimension(450, 40));
-        row.setBackground(new Color(70, 70, 80));
-        row.setBorder(BorderFactory.createMatteBorder(0, 4, 0, 0,
-                (rank == 1) ? Color.YELLOW : (rank == 2 ? Color.LIGHT_GRAY : (rank == 3 ? new Color(205, 127, 50) : Color.DARK_GRAY))));
+        row.setMaximumSize(new Dimension(500, 45));
 
-        String rankStr = (rank > 0) ? "#" + rank + " " : "⭐ ";
-        JLabel nameLbl = new JLabel(" " + rankStr + name);
+        // Warna Background Baris (Dark Grey)
+        row.setBackground(new Color(60, 55, 50));
+
+        // Border berwarna sesuai Rank
+        Color borderColor = Color.DARK_GRAY;
+        String iconStr = "⭐ ";
+        if (rank == 1) { borderColor = new Color(255, 215, 0); iconStr = "🥇 "; } // Emas
+        else if (rank == 2) { borderColor = new Color(192, 192, 192); iconStr = "🥈 "; } // Perak
+        else if (rank == 3) { borderColor = new Color(205, 127, 50); iconStr = "🥉 "; } // Perunggu
+
+        row.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0, 5, 0, 0, borderColor),
+                new EmptyBorder(5, 10, 5, 10)
+        ));
+
+        // FIX: Pakai EMOJI_FONT di sini
+        String rankStr = (rank > 0) ? iconStr : "👤 ";
+        JLabel nameLbl = new JLabel(rankStr + name);
         nameLbl.setForeground(Color.WHITE);
-        nameLbl.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        nameLbl.setFont(EMOJI_FONT);
 
         String suffix = isScore ? " Coins" : " Wins";
-        JLabel valLbl = new JLabel(value + suffix + "  ");
-        valLbl.setForeground(new Color(255, 215, 0)); // Gold text
+        JLabel valLbl = new JLabel(value + suffix);
+        valLbl.setForeground(new Color(255, 223, 0)); // Gold text
         valLbl.setFont(new Font("Monospaced", Font.BOLD, 14));
 
         row.add(nameLbl, BorderLayout.WEST);
