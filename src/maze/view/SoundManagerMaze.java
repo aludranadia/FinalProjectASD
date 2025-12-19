@@ -10,8 +10,8 @@ public class SoundManagerMaze {
     private Map<String, Clip> soundMap;
     private Clip currentBGM;
 
-    private static final float BGM_VOLUME = -10.0f;
-    private static final float SFX_VOLUME = -5.0f;
+    private static final float BGM_VOLUME = -25.0f;
+    private static final float SFX_VOLUME = -10.0f;
 
     public SoundManagerMaze() {
         soundMap = new HashMap<>();

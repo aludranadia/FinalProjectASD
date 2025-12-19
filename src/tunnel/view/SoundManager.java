@@ -10,8 +10,8 @@ public class SoundManager {
     private Map<String, Clip> soundMap;
     private Random random;
 
-    private static final float BGM_VOLUME = -15.0f;
-    private static final float SFX_VOLUME = 0.0f;
+    private static final float BGM_VOLUME = -20.0f;
+    private static final float SFX_VOLUME = -10.0f;
 
     public SoundManager() {
         soundMap = new HashMap<>();
